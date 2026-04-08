@@ -1,10 +1,3 @@
-// ============================================
-// SHARED UI COMPONENTS
-// Reusable loading, error, and empty states
-// These make the app feel intentional even
-// when data fails or hasn't loaded yet
-// ============================================
-
 import React from 'react';
 import {
   View,
@@ -14,7 +7,6 @@ import {
   StyleSheet,
 } from 'react-native';
 
-// ===== LOADING STATE =====
 interface LoadingProps {
   message?: string;
 }
@@ -28,7 +20,6 @@ export function LoadingState({ message = 'Loading...' }: LoadingProps) {
   );
 }
 
-// ===== ERROR STATE =====
 interface ErrorProps {
   message?: string;
   onRetry?: () => void;
@@ -52,7 +43,6 @@ export function ErrorState({
   );
 }
 
-// ===== EMPTY STATE =====
 interface EmptyProps {
   icon?: string;
   title?: string;
@@ -105,4 +95,28 @@ const styles = StyleSheet.create({
   },
   retryButton: {
     backgroundColor: '#4F46E5',
-    paddingHoriz
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 15,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#1F2937',
+    marginBottom: 8,
+  },
+  emptyMessage: {
+    fontSize: 14,
+    color: '#6B7280',
+    textAlign: 'center',
+  },
+});
