@@ -1,9 +1,8 @@
-﻿
-// DASHBOARD SCREEN
+﻿// DASHBOARD SCREEN
 // The main home screen showing activity overview
-// This is what parents see first when they open the app
+// Now uses API service layer + loading/error states
 
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,23 +10,97 @@ import {
   TouchableOpacity,
   StyleSheet,
   Dimensions,
+  RefreshControl,
 } from 'react-native';
-// Import our mock data
-import {mockChildren, mockActivitySummary, mockAlerts} from '../data/mockData';
+import ApiService from '../services/ApiService';
+import StorageService from '../services/StorageService';
+import { LoadingState, ErrorState } from '../components/SharedStates';
+import { Child, ActivitySummary, Alert } from '../types';
 
-// Get screen width for responsive design
-const {width} = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
-// Main component - receives navigation prop from React Navigation
-export default function DashboardScreen({navigation}: any) {
-  // Get data - in real app, this would come from API
-  const child = mockChildren[0];  // First child being monitored
-  const summary = mockActivitySummary;  // Weekly stats
-  const unreadAlerts = mockAlerts.filter(a => !a.isRead);  // Alerts not seen yet
-  const highSeverityAlerts = unreadAlerts.filter(a => a.severity === 'high');  // Urgent alerts
+export default function DashboardScreen({ navigation }: any) {
+  // ===== STATE MANAGEMENT =====
+  const [child, setChild] = useState<Child | null>(null);
+  const [summary, setSummary] = useState<ActivitySummary | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastSync, setLastSync] = useState<string | null>(null);
+
+  // ===== DATA FETCHING =====
+  // Pulls data through the API service layer
+  const fetchData = useCallback(async () => {
+    try {
+      setError(null);
+
+      // Fetch all data in parallel for speed
+      const [children, activitySummary, alertsData] = await Promise.all([
+        ApiService.getChildren(),
+        ApiService.getActivitySummary(),
+        ApiService.getAlerts(),
+      ]);
+
+      // Check for persisted read state from AsyncStorage
+      const readIds = await StorageService.getReadAlertIds();
+      const alertsWithReadState = alertsData.map(a => ({
+        ...a,
+        isRead: a.isRead || readIds.includes(a.id),
+      }));
+
+      setChild(children[0] || null);
+      setSummary(activitySummary);
+      setAlerts(alertsWithReadState);
+
+      // Update last sync time in persistent storage
+      await StorageService.updateLastSync();
+      const syncTime = await StorageService.getLastSyncTime();
+      setLastSync(syncTime);
+    } catch (err: any) {
+      setError(err.message || 'Failed to load dashboard data');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  // Load data on mount
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Pull-to-refresh handler
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchData();
+  }, [fetchData]);
+
+  // ===== LOADING STATE =====
+  if (loading) {
+    return <LoadingState message="Loading dashboard..." />;
+  }
+
+  // ===== ERROR STATE =====
+  if (error) {
+    return <ErrorState message={error} onRetry={fetchData} />;
+  }
+
+  // Derived data
+  const unreadAlerts = alerts.filter(a => !a.isRead);
+  const highSeverityAlerts = unreadAlerts.filter(a => a.severity === 'high');
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor="#FFFFFF"
+          colors={['#4F46E5']}
+        />
+      }>
       {/* ===== HEADER SECTION ===== */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -35,31 +108,30 @@ export default function DashboardScreen({navigation}: any) {
         </View>
 
         {/* Child Information Card */}
-        <View style={styles.childCard}>
-          <Text style={styles.childLabel}>Monitoring</Text>
-          <View style={styles.childInfo}>
-            {/* Avatar circle with first letter of name */}
-            <View style={[styles.avatar, {backgroundColor: '#8B5CF6'}]}>
-              <Text style={styles.avatarText}>{child.name.charAt(0)}</Text>
+        {child && (
+          <View style={styles.childCard}>
+            <Text style={styles.childLabel}>Monitoring</Text>
+            <View style={styles.childInfo}>
+              <View style={[styles.avatar, { backgroundColor: '#8B5CF6' }]}>
+                <Text style={styles.avatarText}>{child.name.charAt(0)}</Text>
+              </View>
+              <View style={styles.childDetails}>
+                <Text style={styles.childName}>{child.name}</Text>
+                <Text style={styles.childUsername}>
+                  @{child.robloxUsername}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.profileButton}
+                onPress={() => navigation.navigate('Profile')}>
+                <Text style={styles.profileButtonText}>›</Text>
+              </TouchableOpacity>
             </View>
-            
-            {/* Child's name and username */}
-            <View style={styles.childDetails}>
-              <Text style={styles.childName}>{child.name}</Text>
-              <Text style={styles.childUsername}>@{child.robloxUsername}</Text>
-            </View>
-            
-            {/* Button to view full profile */}
-            <TouchableOpacity
-              style={styles.profileButton}
-              onPress={() => navigation.navigate('Profile')}>
-              <Text style={styles.profileButtonText}>›</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
       </View>
 
-      {/* ===== ALERT BANNER (only shows if there are high priority alerts) ===== */}
+      {/* ===== ALERT BANNER ===== */}
       {highSeverityAlerts.length > 0 && (
         <TouchableOpacity
           style={styles.alertBanner}
@@ -70,70 +142,77 @@ export default function DashboardScreen({navigation}: any) {
               {highSeverityAlerts.length} High Priority Alert
               {highSeverityAlerts.length > 1 ? 's' : ''}
             </Text>
-            <Text style={styles.alertSubtitle}>{highSeverityAlerts[0].title}</Text>
+            <Text style={styles.alertSubtitle}>
+              {highSeverityAlerts[0].title}
+            </Text>
           </View>
           <Text style={styles.alertArrow}>›</Text>
         </TouchableOpacity>
       )}
 
       {/* ===== STATS CARDS ===== */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>This Week</Text>
-        <View style={styles.statsRow}>
-          {/* Playtime Card */}
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>⏱️</Text>
-            <Text style={styles.statLabel}>Playtime</Text>
-            <Text style={styles.statValue}>
-              {Math.floor(summary.totalPlaytime / 60)}h {summary.totalPlaytime % 60}m
-            </Text>
-          </View>
-          
-          {/* New Friends Card */}
-          <View style={styles.statCard}>
-            <Text style={styles.statIcon}>👥</Text>
-            <Text style={styles.statLabel}>New Friends</Text>
-            <Text style={styles.statValue}>{summary.newFriends}</Text>
+      {summary && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>This Week</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statCard}>
+              <Text style={styles.statIcon}>⏱️</Text>
+              <Text style={styles.statLabel}>Playtime</Text>
+              <Text style={styles.statValue}>
+                {Math.floor(summary.totalPlaytime / 60)}h{' '}
+                {summary.totalPlaytime % 60}m
+              </Text>
+            </View>
+            <View style={styles.statCard}>
+              <Text style={styles.statIcon}>👥</Text>
+              <Text style={styles.statLabel}>New Friends</Text>
+              <Text style={styles.statValue}>{summary.newFriends}</Text>
+            </View>
           </View>
         </View>
-      </View>
+      )}
 
       {/* ===== ACTIVITY CHART ===== */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Daily Activity</Text>
-        <View style={styles.chartCard}>
-          {/* Simple bar chart showing minutes per day */}
-          <View style={styles.chartBars}>
-            {summary.chartData.map((day, index) => {
-              // Calculate bar height based on max value
-              const maxMinutes = Math.max(...summary.chartData.map(d => d.minutes));
-              const height = (day.minutes / maxMinutes) * 100 || 5;  // Min 5px height
-              
-              return (
-                <View key={index} style={styles.barContainer}>
-                  <View
-                    style={[
-                      styles.bar,
-                      {
-                        height: height,
-                        backgroundColor: day.minutes > 0 ? '#3B82F6' : '#E5E7EB',
-                      },
-                    ]}
-                  />
-                  <Text style={styles.barLabel}>{day.day}</Text>
-                </View>
-              );
-            })}
-          </View>
-          <Text style={styles.chartSubtext}>Minutes played per day</Text>
-        </View>
-      </View>
+      {summary && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Daily Activity</Text>
+          <View style={styles.chartCard}>
+            <View style={styles.chartBars}>
+              {summary.chartData.map((day, index) => {
+                const maxMinutes = Math.max(
+                  ...summary.chartData.map(d => d.minutes),
+                );
+                const height = (day.minutes / maxMinutes) * 100 || 5;
 
-      {/* ===== QUICK ACTION BUTTONS ===== */}
+                return (
+                  <View key={index} style={styles.barContainer}>
+                    <Text style={styles.barValue}>
+                      {day.minutes > 0 ? `${day.minutes}` : ''}
+                    </Text>
+                    <View
+                      style={[
+                        styles.bar,
+                        {
+                          height: height,
+                          backgroundColor:
+                            day.minutes > 0 ? '#3B82F6' : '#E5E7EB',
+                        },
+                      ]}
+                    />
+                    <Text style={styles.barLabel}>{day.day}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            <Text style={styles.chartSubtext}>Minutes played per day</Text>
+          </View>
+        </View>
+      )}
+
+      {/* ===== QUICK ACCESS ===== */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Quick Access</Text>
-        
-        {/* View Games Button */}
+
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => navigation.navigate('Activity')}>
@@ -142,13 +221,11 @@ export default function DashboardScreen({navigation}: any) {
           <Text style={styles.actionArrow}>›</Text>
         </TouchableOpacity>
 
-        {/* View Alerts Button */}
         <TouchableOpacity
           style={styles.actionCard}
           onPress={() => navigation.navigate('Alerts')}>
           <Text style={styles.actionIcon}>⚠️</Text>
           <Text style={styles.actionText}>All Alerts</Text>
-          {/* Badge showing unread alert count */}
           {unreadAlerts.length > 0 && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>{unreadAlerts.length}</Text>
@@ -156,18 +233,30 @@ export default function DashboardScreen({navigation}: any) {
           )}
           <Text style={styles.actionArrow}>›</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('Profile')}>
+          <Text style={styles.actionIcon}>👤</Text>
+          <Text style={styles.actionText}>Parental Controls</Text>
+          <Text style={styles.actionArrow}>›</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Bottom spacing */}
-      <View style={{height: 30}} />
+      {/* ===== SYNC INDICATOR ===== */}
+      {lastSync && (
+        <Text style={styles.syncText}>
+          Last synced: {new Date(lastSync).toLocaleTimeString()}
+        </Text>
+      )}
+
+      <View style={{ height: 30 }} />
     </ScrollView>
   );
 }
 
 // ============================================
 // STYLES
-// All visual styling for this screen
-// React Native uses JavaScript objects for styles
 // ============================================
 
 const styles = StyleSheet.create({
@@ -249,7 +338,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 4},
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 5,
     elevation: 8,
@@ -294,7 +383,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 15,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
@@ -318,7 +407,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     padding: 15,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
@@ -327,13 +416,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
-    height: 120,
+    height: 140,
     marginBottom: 10,
   },
   barContainer: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'flex-end',
+  },
+  barValue: {
+    fontSize: 10,
+    color: '#3B82F6',
+    fontWeight: '600',
+    marginBottom: 4,
   },
   bar: {
     width: 20,
@@ -358,7 +453,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
     shadowColor: '#000',
-    shadowOffset: {width: 0, height: 1},
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
@@ -388,5 +483,11 @@ const styles = StyleSheet.create({
   actionArrow: {
     color: '#9CA3AF',
     fontSize: 24,
+  },
+  syncText: {
+    textAlign: 'center',
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 10,
   },
 });

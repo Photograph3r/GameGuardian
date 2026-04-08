@@ -1,109 +1,169 @@
-﻿// MAIN APP FILE - WITH SPLASH SCREEN
+﻿// SPLASH SCREEN
+// Shows app branding while initial data loads
+// Auto-navigates to main app after a brief delay
 
-import React from 'react';
-import {NavigationContainer} from '@react-navigation/native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {createStackNavigator} from '@react-navigation/stack';
-import {Text} from 'react-native';
+import React, { useEffect, useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  Dimensions,
+} from 'react-native';
 
-// ===== IMPORT ALL SCREENS =====
-import SplashScreen from './src/screens/SplashScreen';  // NEW!
-import DashboardScreen from './src/screens/DashboardScreen';
-import ActivityScreen from './src/screens/ActivityScreen';
-import AlertsScreen from './src/screens/AlertsScreen';
-import AlertDetailScreen from './src/screens/AlertDetailScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+const { width } = Dimensions.get('window');
 
-const Tab = createBottomTabNavigator();
-const Stack = createStackNavigator();
+export default function SplashScreen({ navigation }: any) {
+  // Animation values
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [scaleAnim] = useState(new Animated.Value(0.8));
+  const [subtitleFade] = useState(new Animated.Value(0));
+  const [dotOpacity] = useState(new Animated.Value(0));
 
-// Dashboard Stack (unchanged)
-function DashboardStack() {
+  useEffect(() => {
+    // Shield icon fades in and scales up
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 6,
+        tension: 80,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Subtitle fades in after shield
+    setTimeout(() => {
+      Animated.timing(subtitleFade, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+      }).start();
+    }, 400);
+
+    // Loading dots pulse
+    setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(dotOpacity, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dotOpacity, {
+            toValue: 0.3,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ]),
+      ).start();
+    }, 800);
+
+    // Navigate to main app after splash
+    const timer = setTimeout(() => {
+      navigation.replace('MainApp');
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [navigation]);
+
   return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      <Stack.Screen name="DashboardHome" component={DashboardScreen} />
-      <Stack.Screen name="Activity" component={ActivityScreen} />
-      <Stack.Screen name="Alerts" component={AlertsScreen} />
-      <Stack.Screen name="AlertDetail" component={AlertDetailScreen} />
-      <Stack.Screen name="Profile" component={SettingsScreen} />
-    </Stack.Navigator>
+    <View style={styles.container}>
+      {/* Animated shield icon */}
+      <Animated.View
+        style={[
+          styles.iconContainer,
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }],
+          },
+        ]}>
+        <Text style={styles.shieldIcon}>🛡️</Text>
+      </Animated.View>
+
+      {/* App name */}
+      <Animated.View style={{ opacity: fadeAnim }}>
+        <Text style={styles.title}>Game Guardian</Text>
+      </Animated.View>
+
+      {/* Subtitle */}
+      <Animated.View style={{ opacity: subtitleFade }}>
+        <Text style={styles.subtitle}>
+          Protecting your child's gaming experience
+        </Text>
+      </Animated.View>
+
+      {/* Loading indicator */}
+      <Animated.View style={[styles.loadingContainer, { opacity: dotOpacity }]}>
+        <View style={styles.loadingDots}>
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+        </View>
+      </Animated.View>
+
+      {/* Version info */}
+      <Text style={styles.version}>v1.0.0 - PP4 Demo</Text>
+    </View>
   );
 }
 
-// Main Tabs (unchanged)
-function MainTabs() {
-  return (
-    <Tab.Navigator
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#E5E7EB',
-          borderTopWidth: 1,
-          paddingBottom: 5,
-          paddingTop: 5,
-          height: 60,
-        },
-        tabBarActiveTintColor: '#4F46E5',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
-      }}>
-      <Tab.Screen
-        name="Dashboard"
-        component={DashboardStack}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Text style={{fontSize: 24}}>🏠</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="ActivityTab"
-        component={ActivityScreen}
-        options={{
-          tabBarLabel: 'Activity',
-          tabBarIcon: ({color}) => (
-            <Text style={{fontSize: 24}}>📊</Text>
-          ),
-        }}
-      />
-      <Tab.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{
-          tabBarIcon: ({color}) => (
-            <Text style={{fontSize: 24}}>⚙️</Text>
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
-}
-
-// ============================================
-// ROOT NAVIGATOR - WITH SPLASH SCREEN
-// Splash shows first, then navigates to main app
-// ============================================
-function RootNavigator() {
-  return (
-    <Stack.Navigator screenOptions={{headerShown: false}}>
-      {/* Splash screen shows first */}
-      <Stack.Screen name="Splash" component={SplashScreen} />
-      
-      {/* Main app with tabs */}
-      <Stack.Screen name="MainApp" component={MainTabs} />
-    </Stack.Navigator>
-  );
-}
-
-// Main App Component
-export default function App() {
-  return (
-    <NavigationContainer>
-      <RootNavigator />
-    </NavigationContainer>
-  );
-}
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#4F46E5',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  iconContainer: {
+    width: 120,
+    height: 120,
+    borderRadius: 30,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  shieldIcon: {
+    fontSize: 64,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#C7D2FE',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 40,
+  },
+  loadingContainer: {
+    position: 'absolute',
+    bottom: 120,
+  },
+  loadingDots: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#FFFFFF',
+  },
+  version: {
+    position: 'absolute',
+    bottom: 50,
+    color: 'rgba(255, 255, 255, 0.5)',
+    fontSize: 12,
+  },
+});
