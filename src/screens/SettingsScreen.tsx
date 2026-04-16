@@ -1,8 +1,4 @@
-﻿// SETTINGS SCREEN (Child Profile)
-// Shows child profile info and monitoring settings
-// Toggle states now persist via AsyncStorage
-
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback, useContext } from 'react';
 import {
   View,
   Text,
@@ -10,15 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
-  RefreshControl,
+  Alert as RNAlert,
 } from 'react-native';
 import ApiService from '../services/ApiService';
 import StorageService, { UserSettings } from '../services/StorageService';
 import { LoadingState, ErrorState } from '../components/SharedStates';
 import { Child } from '../types';
+import { AuthContext } from '../../App';
 
 export default function SettingsScreen({ navigation }: any) {
-  // ===== STATE =====
+  const { logout } = useContext(AuthContext);
   const [child, setChild] = useState<Child | null>(null);
   const [settings, setSettings] = useState<UserSettings>({
     activityTracking: true,
@@ -29,7 +26,6 @@ export default function SettingsScreen({ navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-  // ===== DATA FETCHING =====
   const fetchData = useCallback(async () => {
     try {
       setError(null);
@@ -52,27 +48,35 @@ export default function SettingsScreen({ navigation }: any) {
     fetchData();
   }, [fetchData]);
 
-  // ===== SETTING TOGGLE HANDLER =====
-  // Updates state AND persists to AsyncStorage
   const toggleSetting = async (key: keyof UserSettings) => {
     const updated = { ...settings, [key]: !settings[key] };
     setSettings(updated);
     await StorageService.saveSettings(updated);
   };
 
-  // ===== RENDER STATES =====
+  const handleLogout = () => {
+    RNAlert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: () => {
+          logout();
+        },
+      },
+    ]);
+  };
+
   if (loading) return <LoadingState message="Loading settings..." />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
   if (!child) return <ErrorState message="No child profile found" />;
 
-  // Format last sync time
   const syncDisplay = lastSync
     ? `Last synced: ${new Date(lastSync).toLocaleTimeString()}`
     : 'Last synced: Never';
 
   return (
     <View style={styles.container}>
-      {/* ===== COLORED HEADER WITH CHILD INFO ===== */}
       <View style={styles.header}>
         <View style={[styles.avatar, { backgroundColor: '#8B5CF6' }]}>
           <Text style={styles.avatarText}>{child.name.charAt(0)}</Text>
@@ -81,9 +85,7 @@ export default function SettingsScreen({ navigation }: any) {
         <Text style={styles.headerSubtitle}>Child Profile</Text>
       </View>
 
-      {/* ===== SCROLLABLE CONTENT ===== */}
       <ScrollView style={styles.content}>
-        {/* ===== PROFILE INFORMATION ===== */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
@@ -132,7 +134,6 @@ export default function SettingsScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* ===== MONITORING SETTINGS ===== */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Monitoring Settings</Text>
 
@@ -182,7 +183,6 @@ export default function SettingsScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* ===== PARENTAL CONTROLS (Stub) ===== */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Parental Controls</Text>
 
@@ -226,7 +226,6 @@ export default function SettingsScreen({ navigation }: any) {
           </View>
         </View>
 
-        {/* ===== PRIVACY NOTICE ===== */}
         <View style={styles.privacyCard}>
           <Text style={styles.privacyTitle}>Privacy & Safety</Text>
           <Text style={styles.privacyText}>
@@ -238,6 +237,11 @@ export default function SettingsScreen({ navigation }: any) {
         </View>
 
         <Text style={styles.syncText}>{syncDisplay}</Text>
+
+        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
+          <Text style={styles.logoutText}>Log Out</Text>
+        </TouchableOpacity>
+
         <View style={{ height: 30 }} />
       </ScrollView>
     </View>
@@ -303,4 +307,16 @@ const styles = StyleSheet.create({
   privacyTitle: { fontSize: 14, fontWeight: '600', color: '#1F2937', marginBottom: 8 },
   privacyText: { fontSize: 12, color: '#4B5563', lineHeight: 18 },
   syncText: { textAlign: 'center', fontSize: 14, color: '#6B7280' },
+  logoutButton: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 12,
+    paddingVertical: 15,
+    alignItems: 'center',
+    marginTop: 15,
+  },
+  logoutText: {
+    color: '#991B1B',
+    fontSize: 16,
+    fontWeight: '600',
+  },
 });
