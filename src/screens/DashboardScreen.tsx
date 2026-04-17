@@ -70,8 +70,17 @@ export default function DashboardScreen({ navigation }: any) {
     fetchData();
   }, [fetchData]);
 
+ // Time-of-day greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
+
   // Pull-to-refresh handler
-  const onRefresh = useCallback(() => {
+ 
+ const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchData();
   }, [fetchData]);
@@ -104,7 +113,8 @@ export default function DashboardScreen({ navigation }: any) {
       {/* ===== HEADER SECTION ===== */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={styles.headerTitle}>🛡️ Game Guardian</Text>
+<Text style={styles.headerTitle}>🛡️ {getGreeting()}</Text>
+          <Text style={styles.headerGreeting}>Game Guardian</Text>
         </View>
 
         {/* Child Information Card */}
@@ -277,6 +287,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#FFFFFF',
+  },
+headerGreeting: {
+    fontSize: 14,
+    color: '#C7D2FE',
   },
   childCard: {
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
