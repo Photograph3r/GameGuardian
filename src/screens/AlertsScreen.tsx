@@ -16,25 +16,26 @@ import StorageService from '../services/StorageService';
 import { LoadingState, ErrorState, EmptyState } from '../components/SharedStates';
 import { Alert } from '../types';
 
+type FilterType = 'all' | 'high' | 'medium' | 'low';
+type SortType = 'newest' | 'oldest';
+
 export default function AlertsScreen({ navigation }: any) {
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [filter, setFilter] = useState<FilterType>('all');
+  const [sort, setSort] = useState<SortType>('newest');
 
-  // ===== DATA FETCHING =====
   const fetchAlerts = useCallback(async () => {
     try {
       setError(null);
       const data = await ApiService.getAlerts();
-
-      // Merge persisted read state from AsyncStorage
       const readIds = await StorageService.getReadAlertIds();
       const alertsWithState = data.map(a => ({
         ...a,
         isRead: a.isRead || readIds.includes(a.id),
       }));
-
       setAlerts(alertsWithState);
     } catch (err: any) {
       setError(err.message || 'Failed to load alerts');
@@ -53,8 +54,6 @@ export default function AlertsScreen({ navigation }: any) {
     fetchAlerts();
   }, [fetchAlerts]);
 
-  // ===== MARK ALERT AS READ =====
-  // Persists to AsyncStorage so it survives app restart
   const handleAlertPress = async (alert: Alert) => {
     if (!alert.isRead) {
       await StorageService.markAlertRead(alert.id);
@@ -66,15 +65,12 @@ export default function AlertsScreen({ navigation }: any) {
     navigation.navigate('AlertDetail', { alert });
   };
 
-  // ===== HELPER FUNCTIONS =====
-
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'Yesterday';
@@ -83,14 +79,10 @@ export default function AlertsScreen({ navigation }: any) {
 
   const getSeverityColor = (severity: string) => {
     switch (severity) {
-      case 'high':
-        return { bg: '#FEE2E2', text: '#991B1B', border: '#FCA5A5' };
-      case 'medium':
-        return { bg: '#FED7AA', text: '#9A3412', border: '#FDBA74' };
-      case 'low':
-        return { bg: '#FEF3C7', text: '#854D0E', border: '#FDE047' };
-      default:
-        return { bg: '#F3F4F6', text: '#374151', border: '#D1D5DB' };
+      case 'high': return { bg: '#FEE2E2', text: '#991B1B' };
+      case 'medium': return { bg: '#FED7AA', text: '#9A3412' };
+      case 'low': return { bg: '#FEF3C7', text: '#854D0E' };
+      default: return { bg: '#F3F4F6', text: '#374151' };
     }
   };
 
@@ -104,36 +96,23 @@ export default function AlertsScreen({ navigation }: any) {
     }
   };
 
-  // ===== RENDER STATES =====
   if (loading) return <LoadingState message="Loading alerts..." />;
   if (error) return <ErrorState message={error} onRetry={fetchAlerts} />;
 
-  const unreadCount = alerts.filter(a => !a.isRead).length;
+  let filteredAlerts = filter === 'all'
+    ? alerts
+    : alerts.filter(a => a.severity === filter);
 
-  if (alerts.length === 0) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}>
-            <Text style={styles.backText}>‹</Text>
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Alerts</Text>
-          <View style={{ width: 40 }} />
-        </View>
-        <EmptyState
-          icon="🎉"
-          title="All Clear!"
-          message="No safety alerts at this time"
-        />
-      </View>
-    );
-  }
+  filteredAlerts = [...filteredAlerts].sort((a, b) => {
+    const dateA = new Date(a.timestamp).getTime();
+    const dateB = new Date(b.timestamp).getTime();
+    return sort === 'newest' ? dateB - dateA : dateA - dateB;
+  });
+
+  const unreadCount = alerts.filter(a => !a.isRead).length;
 
   return (
     <View style={styles.container}>
-      {/* ===== HEADER ===== */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -149,52 +128,79 @@ export default function AlertsScreen({ navigation }: any) {
         {unreadCount === 0 && <View style={{ width: 40 }} />}
       </View>
 
-      {/* ===== ALERTS LIST ===== */}
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }>
-        {alerts.map(alert => {
-          const colors = getSeverityColor(alert.severity);
-          const icon = getAlertIcon(alert.type);
+      <View style={styles.filterRow}>
+        {(['all', 'high', 'medium', 'low'] as FilterType[]).map(f => (
+          <TouchableOpacity
+            key={f}
+            style={[styles.filterButton, filter === f && styles.filterButtonActive]}
+            onPress={() => setFilter(f)}>
+            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+              {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
+            </Text>
+          </TouchableOpacity>
+        ))}
+        <TouchableOpacity
+          style={styles.sortButton}
+          onPress={() => setSort(sort === 'newest' ? 'oldest' : 'newest')}>
+          <Text style={styles.sortText}>
+            {sort === 'newest' ? '↓ New' : '↑ Old'}
+          </Text>
+        </TouchableOpacity>
+      </View>
 
-          return (
-            <TouchableOpacity
-              key={alert.id}
-              style={[
-                styles.alertCard,
-                !alert.isRead && styles.alertCardUnread,
-              ]}
-              onPress={() => handleAlertPress(alert)}>
-              <View style={[styles.iconContainer, { backgroundColor: colors.bg }]}>
-                <Text style={styles.alertIcon}>{icon}</Text>
-              </View>
+      {filteredAlerts.length === 0 ? (
+        <EmptyState
+          icon="🔍"
+          title="No Alerts Found"
+          message={`No ${filter} severity alerts to show`}
+        />
+      ) : (
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }>
+          {filteredAlerts.map(alert => {
+            const colors = getSeverityColor(alert.severity);
+            const icon = getAlertIcon(alert.type);
 
-              <View style={styles.alertContent}>
-                <View style={styles.alertHeader}>
-                  <Text style={styles.alertTitle}>{alert.title}</Text>
-                  {!alert.isRead && <View style={styles.unreadDot} />}
+            return (
+              <TouchableOpacity
+                key={alert.id}
+                style={[
+                  styles.alertCard,
+                  !alert.isRead && styles.alertCardUnread,
+                ]}
+                onPress={() => handleAlertPress(alert)}>
+                <View style={[styles.iconContainer, { backgroundColor: colors.bg }]}>
+                  <Text style={styles.alertIcon}>{icon}</Text>
                 </View>
-                <Text style={styles.alertMessage} numberOfLines={2}>
-                  {alert.message}
-                </Text>
-                <View style={styles.alertFooter}>
-                  <View style={[styles.severityBadge, { backgroundColor: colors.bg }]}>
-                    <Text style={[styles.severityText, { color: colors.text }]}>
-                      {alert.severity.toUpperCase()}
+
+                <View style={styles.alertContent}>
+                  <View style={styles.alertHeader}>
+                    <Text style={styles.alertTitle}>{alert.title}</Text>
+                    {!alert.isRead && <View style={styles.unreadDot} />}
+                  </View>
+                  <Text style={styles.alertMessage} numberOfLines={2}>
+                    {alert.message}
+                  </Text>
+                  <View style={styles.alertFooter}>
+                    <View style={[styles.severityBadge, { backgroundColor: colors.bg }]}>
+                      <Text style={[styles.severityText, { color: colors.text }]}>
+                        {alert.severity.toUpperCase()}
+                      </Text>
+                    </View>
+                    <Text style={styles.timestamp}>
+                      {formatTimestamp(alert.timestamp)}
                     </Text>
                   </View>
-                  <Text style={styles.timestamp}>
-                    {formatTimestamp(alert.timestamp)}
-                  </Text>
                 </View>
-              </View>
-            </TouchableOpacity>
-          );
-        })}
-        <View style={{ height: 30 }} />
-      </ScrollView>
+              </TouchableOpacity>
+            );
+          })}
+          <View style={{ height: 30 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -202,37 +208,37 @@ export default function AlertsScreen({ navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   header: {
-    backgroundColor: '#FFFFFF',
-    paddingTop: 50,
-    paddingBottom: 15,
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 3,
+    backgroundColor: '#FFFFFF', paddingTop: 50, paddingBottom: 15, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 3,
   },
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
   backText: { fontSize: 32, color: '#374151' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', color: '#1F2937' },
   badge: { backgroundColor: '#FEE2E2', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   badgeText: { color: '#991B1B', fontSize: 12, fontWeight: '600' },
+  filterRow: {
+    flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 12,
+    backgroundColor: '#FFFFFF', gap: 8, alignItems: 'center',
+    borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
+  },
+  filterButton: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
+    backgroundColor: '#F3F4F6',
+  },
+  filterButtonActive: { backgroundColor: '#4F46E5' },
+  filterText: { fontSize: 13, fontWeight: '500', color: '#6B7280' },
+  filterTextActive: { color: '#FFFFFF' },
+  sortButton: {
+    marginLeft: 'auto', paddingHorizontal: 12, paddingVertical: 7,
+    borderRadius: 20, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB',
+  },
+  sortText: { fontSize: 13, fontWeight: '500', color: '#6B7280' },
   content: { flex: 1, padding: 20 },
   alertCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 15,
-    flexDirection: 'row',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, flexDirection: 'row', marginBottom: 12,
+    borderWidth: 1, borderColor: '#E5E7EB',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
   alertCardUnread: { borderColor: '#93C5FD', borderWidth: 2, shadowColor: '#3B82F6', shadowOpacity: 0.15 },
   iconContainer: { width: 50, height: 50, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },

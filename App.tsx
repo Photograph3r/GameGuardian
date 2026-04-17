@@ -4,9 +4,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Text } from 'react-native';
 import AuthService from './src/services/AuthService';
+import StorageService from './src/services/StorageService';
 
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 import SplashScreen from './src/screens/SplashScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
 import ActivityScreen from './src/screens/ActivityScreen';
@@ -17,7 +19,6 @@ import SettingsScreen from './src/screens/SettingsScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Global logout function that App can pass down
 export const AuthContext = createContext<{ logout: () => void }>({ logout: () => {} });
 
 function DashboardStack() {
@@ -47,72 +48,88 @@ function MainTabs() {
         },
         tabBarActiveTintColor: '#4F46E5',
         tabBarInactiveTintColor: '#9CA3AF',
-        tabBarLabelStyle: {
-          fontSize: 12,
-          fontWeight: '600',
-        },
+        tabBarLabelStyle: { fontSize: 12, fontWeight: '600' },
       }}>
       <Tab.Screen
         name="Dashboard"
         component={DashboardStack}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>🏠</Text>
-          ),
-        }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 24 }}>🏠</Text> }}
       />
       <Tab.Screen
         name="ActivityTab"
         component={ActivityScreen}
         options={{
           tabBarLabel: 'Activity',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>📊</Text>
-          ),
+          tabBarIcon: () => <Text style={{ fontSize: 24 }}>📊</Text>,
         }}
       />
       <Tab.Screen
         name="Settings"
         component={SettingsScreen}
-        options={{
-          tabBarIcon: ({ color }) => (
-            <Text style={{ fontSize: 24 }}>⚙️</Text>
-          ),
-        }}
+        options={{ tabBarIcon: () => <Text style={{ fontSize: 24 }}>⚙️</Text> }}
       />
     </Tab.Navigator>
   );
 }
 
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [appState, setAppState] = useState<'loading' | 'onboarding' | 'login' | 'app'>('loading');
+
+  const checkState = async () => {
+    // First check: has user seen onboarding?
+    const onboarded = await StorageService.hasCompletedOnboarding();
+    if (!onboarded) {
+      setAppState('onboarding');
+      return;
+    }
+    // Second check: is user logged in?
+    const authenticated = await AuthService.isAuthenticated();
+    if (!authenticated) {
+      setAppState('login');
+      return;
+    }
+    setAppState('app');
+  };
 
   useEffect(() => {
-    const check = async () => {
-      const authenticated = await AuthService.isAuthenticated();
-      setIsLoggedIn(authenticated);
-    };
-    check();
+    checkState();
   }, []);
 
   const handleLogout = async () => {
     await AuthService.logout();
-    setIsLoggedIn(false);
+    setAppState('login');
+  };
+
+  const handleOnboardingComplete = () => {
+    setAppState('login');
   };
 
   const handleLogin = () => {
-    setIsLoggedIn(true);
+    setAppState('app');
   };
 
-  if (isLoggedIn === null) {
+  if (appState === 'loading') {
     return null;
   }
 
   return (
     <AuthContext.Provider value={{ logout: handleLogout }}>
-      <NavigationContainer key={isLoggedIn ? 'loggedIn' : 'loggedOut'}>
+      <NavigationContainer key={appState}>
         <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {!isLoggedIn ? (
+          {appState === 'onboarding' && (
+            <Stack.Screen name="Onboarding">
+              {(props) => (
+                <OnboardingScreen
+                  {...props}
+                  navigation={{
+                    ...props.navigation,
+                    replace: () => handleOnboardingComplete(),
+                  }}
+                />
+              )}
+            </Stack.Screen>
+          )}
+          {appState === 'login' && (
             <>
               <Stack.Screen name="Login">
                 {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
@@ -121,7 +138,8 @@ export default function App() {
                 {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
               </Stack.Screen>
             </>
-          ) : (
+          )}
+          {appState === 'app' && (
             <>
               <Stack.Screen name="Splash" component={SplashScreen} />
               <Stack.Screen
