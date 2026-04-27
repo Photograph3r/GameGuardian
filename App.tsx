@@ -15,7 +15,11 @@ import ActivityScreen from './src/screens/ActivityScreen';
 import AlertsScreen from './src/screens/AlertsScreen';
 import AlertDetailScreen from './src/screens/AlertDetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import AddChildScreen from './src/screens/AddChildScreen';
 
+import ScreenTimeLimitsScreen from './src/screens/ScreenTimeLimitsScreen';
+import GameBlocklistScreen from './src/screens/GameBlocklistScreen';
+import QuietHoursScreen from './src/screens/QuietHoursScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
@@ -29,6 +33,10 @@ function DashboardStack() {
       <Stack.Screen name="Alerts" component={AlertsScreen} />
       <Stack.Screen name="AlertDetail" component={AlertDetailScreen} />
       <Stack.Screen name="Profile" component={SettingsScreen} />
+      <Stack.Screen name="AddChild" component={AddChildScreen} />
+	<Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
+      <Stack.Screen name="GameBlocklist" component={GameBlocklistScreen} />
+      <Stack.Screen name="QuietHours" component={QuietHoursScreen} />
     </Stack.Navigator>
   );
 }
@@ -76,13 +84,11 @@ export default function App() {
   const [appState, setAppState] = useState<'loading' | 'onboarding' | 'login' | 'app'>('loading');
 
   const checkState = async () => {
-    // First check: has user seen onboarding?
     const onboarded = await StorageService.hasCompletedOnboarding();
     if (!onboarded) {
       setAppState('onboarding');
       return;
     }
-    // Second check: is user logged in?
     const authenticated = await AuthService.isAuthenticated();
     if (!authenticated) {
       setAppState('login');

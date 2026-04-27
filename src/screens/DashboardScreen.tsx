@@ -1,8 +1,4 @@
-﻿// DASHBOARD SCREEN
-// The main home screen showing activity overview
-// Now uses API service layer + loading/error states
-
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -20,7 +16,6 @@ import { Child, ActivitySummary, Alert } from '../types';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen({ navigation }: any) {
-  // ===== STATE MANAGEMENT =====
   const [child, setChild] = useState<Child | null>(null);
   const [summary, setSummary] = useState<ActivitySummary | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -29,31 +24,22 @@ export default function DashboardScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [lastSync, setLastSync] = useState<string | null>(null);
 
-  // ===== DATA FETCHING =====
-  // Pulls data through the API service layer
   const fetchData = useCallback(async () => {
     try {
       setError(null);
-
-      // Fetch all data in parallel for speed
       const [children, activitySummary, alertsData] = await Promise.all([
         ApiService.getChildren(),
         ApiService.getActivitySummary(),
         ApiService.getAlerts(),
       ]);
-
-      // Check for persisted read state from AsyncStorage
       const readIds = await StorageService.getReadAlertIds();
       const alertsWithReadState = alertsData.map(a => ({
         ...a,
         isRead: a.isRead || readIds.includes(a.id),
       }));
-
       setChild(children[0] || null);
       setSummary(activitySummary);
       setAlerts(alertsWithReadState);
-
-      // Update last sync time in persistent storage
       await StorageService.updateLastSync();
       const syncTime = await StorageService.getLastSyncTime();
       setLastSync(syncTime);
@@ -65,12 +51,10 @@ export default function DashboardScreen({ navigation }: any) {
     }
   }, []);
 
-  // Load data on mount
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
- // Time-of-day greeting
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good Morning';
@@ -78,24 +62,19 @@ export default function DashboardScreen({ navigation }: any) {
     return 'Good Evening';
   };
 
-  // Pull-to-refresh handler
- 
- const onRefresh = useCallback(() => {
+  const onRefresh = useCallback(() => {
     setRefreshing(true);
     fetchData();
   }, [fetchData]);
 
-  // ===== LOADING STATE =====
   if (loading) {
     return <LoadingState message="Loading dashboard..." />;
   }
 
-  // ===== ERROR STATE =====
   if (error) {
     return <ErrorState message={error} onRetry={fetchData} />;
   }
 
-  // Derived data
   const unreadAlerts = alerts.filter(a => !a.isRead);
   const highSeverityAlerts = unreadAlerts.filter(a => a.severity === 'high');
 
@@ -113,11 +92,10 @@ export default function DashboardScreen({ navigation }: any) {
       {/* ===== HEADER SECTION ===== */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-<Text style={styles.headerTitle}>🛡️ {getGreeting()}</Text>
+          <Text style={styles.headerTitle}>🛡️ {getGreeting()}</Text>
           <Text style={styles.headerGreeting}>Game Guardian</Text>
         </View>
 
-        {/* Child Information Card */}
         {child && (
           <View style={styles.childCard}>
             <Text style={styles.childLabel}>Monitoring</Text>
@@ -193,7 +171,6 @@ export default function DashboardScreen({ navigation }: any) {
                   ...summary.chartData.map(d => d.minutes),
                 );
                 const height = (day.minutes / maxMinutes) * 100 || 5;
-
                 return (
                   <View key={index} style={styles.barContainer}>
                     <Text style={styles.barValue}>
@@ -251,6 +228,14 @@ export default function DashboardScreen({ navigation }: any) {
           <Text style={styles.actionText}>Parental Controls</Text>
           <Text style={styles.actionArrow}>›</Text>
         </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.actionCard}
+          onPress={() => navigation.navigate('AddChild')}>
+          <Text style={styles.actionIcon}>➕</Text>
+          <Text style={styles.actionText}>Add Child</Text>
+          <Text style={styles.actionArrow}>›</Text>
+        </TouchableOpacity>
       </View>
 
       {/* ===== SYNC INDICATOR ===== */}
@@ -265,243 +250,60 @@ export default function DashboardScreen({ navigation }: any) {
   );
 }
 
-// ============================================
-// STYLES
-// ============================================
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-  },
-  header: {
-    backgroundColor: '#4F46E5',
-    paddingTop: 50,
-    paddingBottom: 20,
-    paddingHorizontal: 20,
-  },
-  headerTop: {
-    marginBottom: 15,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-headerGreeting: {
-    fontSize: 14,
-    color: '#C7D2FE',
-  },
-  childCard: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 15,
-    padding: 15,
-  },
-  childLabel: {
-    color: '#C7D2FE',
-    fontSize: 12,
-    marginBottom: 8,
-  },
-  childInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
-    color: '#FFFFFF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  childDetails: {
-    flex: 1,
-  },
-  childName: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontWeight: '600',
-  },
-  childUsername: {
-    color: '#C7D2FE',
-    fontSize: 14,
-  },
-  profileButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  profileButtonText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-  },
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  header: { backgroundColor: '#4F46E5', paddingTop: 50, paddingBottom: 20, paddingHorizontal: 20 },
+  headerTop: { marginBottom: 15 },
+  headerTitle: { fontSize: 24, fontWeight: 'bold', color: '#FFFFFF' },
+  headerGreeting: { fontSize: 14, color: '#C7D2FE' },
+  childCard: { backgroundColor: 'rgba(255, 255, 255, 0.15)', borderRadius: 15, padding: 15 },
+  childLabel: { color: '#C7D2FE', fontSize: 12, marginBottom: 8 },
+  childInfo: { flexDirection: 'row', alignItems: 'center' },
+  avatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  avatarText: { color: '#FFFFFF', fontSize: 20, fontWeight: 'bold' },
+  childDetails: { flex: 1 },
+  childName: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
+  childUsername: { color: '#C7D2FE', fontSize: 14 },
+  profileButton: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  profileButtonText: { color: '#FFFFFF', fontSize: 24 },
   alertBanner: {
-    backgroundColor: '#EF4444',
-    marginHorizontal: 20,
-    marginTop: -15,
-    marginBottom: 15,
-    borderRadius: 15,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-    elevation: 8,
+    backgroundColor: '#EF4444', marginHorizontal: 20, marginTop: -15, marginBottom: 15,
+    borderRadius: 15, padding: 15, flexDirection: 'row', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 5, elevation: 8,
   },
-  alertIcon: {
-    fontSize: 24,
-    marginRight: 12,
-  },
-  alertContent: {
-    flex: 1,
-  },
-  alertTitle: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  alertSubtitle: {
-    color: '#FEE2E2',
-    fontSize: 14,
-  },
-  alertArrow: {
-    color: '#FFFFFF',
-    fontSize: 24,
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1F2937',
-    marginBottom: 12,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  alertIcon: { fontSize: 24, marginRight: 12 },
+  alertContent: { flex: 1 },
+  alertTitle: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  alertSubtitle: { color: '#FEE2E2', fontSize: 14 },
+  alertArrow: { color: '#FFFFFF', fontSize: 24 },
+  section: { paddingHorizontal: 20, marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: '600', color: '#1F2937', marginBottom: 12 },
+  statsRow: { flexDirection: 'row', gap: 12 },
   statCard: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  statIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  statLabel: {
-    color: '#6B7280',
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  statValue: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1F2937',
-  },
+  statIcon: { fontSize: 24, marginBottom: 8 },
+  statLabel: { color: '#6B7280', fontSize: 14, marginBottom: 4 },
+  statValue: { fontSize: 24, fontWeight: 'bold', color: '#1F2937' },
   chartCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 15,
-    padding: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  chartBars: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    height: 140,
-    marginBottom: 10,
-  },
-  barContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-  },
-  barValue: {
-    fontSize: 10,
-    color: '#3B82F6',
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  bar: {
-    width: 20,
-    borderTopLeftRadius: 8,
-    borderTopRightRadius: 8,
-  },
-  barLabel: {
-    fontSize: 10,
-    color: '#6B7280',
-    marginTop: 4,
-  },
-  chartSubtext: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#6B7280',
-  },
+  chartBars: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 140, marginBottom: 10 },
+  barContainer: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
+  barValue: { fontSize: 10, color: '#3B82F6', fontWeight: '600', marginBottom: 4 },
+  bar: { width: 20, borderTopLeftRadius: 8, borderTopRightRadius: 8 },
+  barLabel: { fontSize: 10, color: '#6B7280', marginTop: 4 },
+  chartSubtext: { textAlign: 'center', fontSize: 12, color: '#6B7280' },
   actionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 15,
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 12, padding: 15, flexDirection: 'row', alignItems: 'center', marginBottom: 8,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  actionIcon: {
-    fontSize: 32,
-    marginRight: 12,
-  },
-  actionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#1F2937',
-  },
-  badge: {
-    backgroundColor: '#EF4444',
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginRight: 8,
-  },
-  badgeText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  actionArrow: {
-    color: '#9CA3AF',
-    fontSize: 24,
-  },
-  syncText: {
-    textAlign: 'center',
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginBottom: 10,
-  },
+  actionIcon: { fontSize: 32, marginRight: 12 },
+  actionText: { flex: 1, fontSize: 16, fontWeight: '500', color: '#1F2937' },
+  badge: { backgroundColor: '#EF4444', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2, marginRight: 8 },
+  badgeText: { color: '#FFFFFF', fontSize: 12, fontWeight: '600' },
+  actionArrow: { color: '#9CA3AF', fontSize: 24 },
+  syncText: { textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginBottom: 10 },
 });

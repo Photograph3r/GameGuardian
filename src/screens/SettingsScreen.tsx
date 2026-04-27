@@ -187,7 +187,7 @@ export default function SettingsScreen({ navigation }: any) {
           <Text style={styles.sectionTitle}>Parental Controls</Text>
 
           <View style={styles.settingCard}>
-            <TouchableOpacity style={styles.controlRow}>
+            <TouchableOpacity style={styles.controlRow} onPress={() => navigation.navigate('ScreenTimeLimits')}>
               <View style={styles.controlIcon}>
                 <Text style={styles.controlIconText}>🕐</Text>
               </View>
@@ -195,12 +195,12 @@ export default function SettingsScreen({ navigation }: any) {
                 <Text style={styles.settingTitle}>Screen Time Limits</Text>
                 <Text style={styles.settingDescription}>Set daily play limits</Text>
               </View>
-              <Text style={styles.comingSoon}>Coming Soon</Text>
+              <Text style={styles.controlArrow}>›</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.controlRow}>
+            <TouchableOpacity style={styles.controlRow} onPress={() => navigation.navigate('GameBlocklist')}>
               <View style={styles.controlIcon}>
                 <Text style={styles.controlIconText}>🚫</Text>
               </View>
@@ -208,12 +208,12 @@ export default function SettingsScreen({ navigation }: any) {
                 <Text style={styles.settingTitle}>Game Blocklist</Text>
                 <Text style={styles.settingDescription}>Block specific games</Text>
               </View>
-              <Text style={styles.comingSoon}>Coming Soon</Text>
+              <Text style={styles.controlArrow}>›</Text>
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            <TouchableOpacity style={styles.controlRow}>
+            <TouchableOpacity style={styles.controlRow} onPress={() => navigation.navigate('QuietHours')}>
               <View style={styles.controlIcon}>
                 <Text style={styles.controlIconText}>🔔</Text>
               </View>
@@ -221,7 +221,7 @@ export default function SettingsScreen({ navigation }: any) {
                 <Text style={styles.settingTitle}>Quiet Hours</Text>
                 <Text style={styles.settingDescription}>No gaming during set hours</Text>
               </View>
-              <Text style={styles.comingSoon}>Coming Soon</Text>
+              <Text style={styles.controlArrow}>›</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -318,5 +318,9 @@ const styles = StyleSheet.create({
     color: '#991B1B',
     fontSize: 16,
     fontWeight: '600',
+  },
+controlArrow: {
+    fontSize: 24,
+    color: '#9CA3AF',
   },
 });
