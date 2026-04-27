@@ -13,10 +13,11 @@ import StorageService, { UserSettings } from '../services/StorageService';
 import { LoadingState, ErrorState } from '../components/SharedStates';
 import { Child } from '../types';
 import { AuthContext } from '../../App';
-
+import { useTheme } from '../context/ThemeContext';
 export default function SettingsScreen({ navigation }: any) {
   const { logout } = useContext(AuthContext);
-  const [child, setChild] = useState<Child | null>(null);
+const { mode, setMode, colors } = useTheme();  
+const [child, setChild] = useState<Child | null>(null);
   const [settings, setSettings] = useState<UserSettings>({
     activityTracking: true,
     patternDetection: true,
@@ -76,16 +77,16 @@ export default function SettingsScreen({ navigation }: any) {
     : 'Last synced: Never';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { backgroundColor: colors.headerBg }]}>
         <View style={[styles.avatar, { backgroundColor: '#8B5CF6' }]}>
           <Text style={styles.avatarText}>{child.name.charAt(0)}</Text>
         </View>
-        <Text style={styles.headerName}>{child.name}</Text>
-        <Text style={styles.headerSubtitle}>Child Profile</Text>
+       <Text style={[styles.headerName, { color: colors.headerText }]}>{child.name}</Text>
+        <Text style={[styles.headerSubtitle, { color: colors.headerSubtext }]}>Child Profile</Text>
       </View>
 
-      <ScrollView style={styles.content}>
+      <ScrollView style={[styles.content, { backgroundColor: colors.background }]}>
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Profile Information</Text>
@@ -94,7 +95,7 @@ export default function SettingsScreen({ navigation }: any) {
             </TouchableOpacity>
           </View>
 
-          <View style={styles.infoCard}>
+          <View style={[styles.infoCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.infoRow}>
               <View style={styles.infoIcon}>
                 <Text style={styles.infoIconText}>👤</Text>
@@ -113,7 +114,7 @@ export default function SettingsScreen({ navigation }: any) {
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Timezone</Text>
-                <Text style={styles.infoValue}>{child.timezone}</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>{child.timezone}</Text>
               </View>
             </View>
 
@@ -137,7 +138,7 @@ export default function SettingsScreen({ navigation }: any) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Monitoring Settings</Text>
 
-          <View style={styles.settingCard}>
+          <View style={[styles.settingCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
             <View style={styles.settingRow}>
               <View style={styles.settingContent}>
                 <Text style={styles.settingTitle}>Activity Tracking</Text>
@@ -184,7 +185,7 @@ export default function SettingsScreen({ navigation }: any) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Parental Controls</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Parental Controls</Text>
 
           <View style={styles.settingCard}>
             <TouchableOpacity style={styles.controlRow} onPress={() => navigation.navigate('ScreenTimeLimits')}>
@@ -192,7 +193,7 @@ export default function SettingsScreen({ navigation }: any) {
                 <Text style={styles.controlIconText}>🕐</Text>
               </View>
               <View style={styles.settingContent}>
-                <Text style={styles.settingTitle}>Screen Time Limits</Text>
+                <Text style={[styles.settingTitle, { color: colors.text }]}>Screen Time Limits</Text>
                 <Text style={styles.settingDescription}>Set daily play limits</Text>
               </View>
               <Text style={styles.controlArrow}>›</Text>
@@ -222,6 +223,51 @@ export default function SettingsScreen({ navigation }: any) {
                 <Text style={styles.settingDescription}>No gaming during set hours</Text>
               </View>
               <Text style={styles.controlArrow}>›</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+<View style={styles.section}>
+          <Text style={styles.sectionTitle}>Appearance</Text>
+          <View style={styles.settingCard}>
+            <TouchableOpacity
+              style={styles.controlRow}
+              onPress={() => setMode('light')}>
+              <View style={styles.controlIcon}>
+                <Text style={styles.controlIconText}>☀️</Text>
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Light Mode</Text>
+              </View>
+              {mode === 'light' && <Text style={styles.checkMark}>✓</Text>}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.controlRow}
+              onPress={() => setMode('dark')}>
+              <View style={styles.controlIcon}>
+                <Text style={styles.controlIconText}>🌙</Text>
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>Dark Mode</Text>
+              </View>
+              {mode === 'dark' && <Text style={styles.checkMark}>✓</Text>}
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.controlRow}
+              onPress={() => setMode('high-contrast')}>
+              <View style={styles.controlIcon}>
+                <Text style={styles.controlIconText}>🔲</Text>
+              </View>
+              <View style={styles.settingContent}>
+                <Text style={styles.settingTitle}>High Contrast</Text>
+              </View>
+              {mode === 'high-contrast' && <Text style={styles.checkMark}>✓</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -322,5 +368,10 @@ const styles = StyleSheet.create({
 controlArrow: {
     fontSize: 24,
     color: '#9CA3AF',
+  },
+checkMark: {
+    fontSize: 20,
+    color: '#4F46E5',
+    fontWeight: 'bold',
   },
 });

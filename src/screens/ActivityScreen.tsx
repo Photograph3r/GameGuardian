@@ -1,8 +1,4 @@
-﻿// ACTIVITY SCREEN
-// Shows games, friends, and groups
-// Tabs now actually switch between views
-
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,11 +11,9 @@ import ApiService from '../services/ApiService';
 import { LoadingState, ErrorState, EmptyState } from '../components/SharedStates';
 import { Game, Friend, Group } from '../types';
 
-// Tab options
 type TabType = 'games' | 'friends' | 'groups';
 
 export default function ActivityScreen({ navigation }: any) {
-  // ===== STATE =====
   const [activeTab, setActiveTab] = useState<TabType>('games');
   const [games, setGames] = useState<Game[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -28,7 +22,6 @@ export default function ActivityScreen({ navigation }: any) {
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  // ===== DATA FETCHING =====
   const fetchData = useCallback(async () => {
     try {
       setError(null);
@@ -57,11 +50,8 @@ export default function ActivityScreen({ navigation }: any) {
     fetchData();
   }, [fetchData]);
 
-  // ===== RENDER STATES =====
   if (loading) return <LoadingState message="Loading activity..." />;
   if (error) return <ErrorState message={error} onRetry={fetchData} />;
-
-  // ===== TAB CONTENT RENDERERS =====
 
   const renderGames = () => {
     if (games.length === 0) {
@@ -81,11 +71,13 @@ export default function ActivityScreen({ navigation }: any) {
             </View>
             <View style={[
               styles.tag,
-              game.ageRating === '13+' ? styles.tagOrange : styles.tagGreen,
+              game.ageRating === '13+' ? styles.tagOrange :
+              game.ageRating === '9+' ? styles.tagYellow : styles.tagGreen,
             ]}>
               <Text style={[
                 styles.tagText,
-                game.ageRating === '13+' ? styles.tagTextOrange : styles.tagTextGreen,
+                game.ageRating === '13+' ? styles.tagTextOrange :
+                game.ageRating === '9+' ? styles.tagTextYellow : styles.tagTextGreen,
               ]}>
                 {game.ageRating}
               </Text>
@@ -139,18 +131,16 @@ export default function ActivityScreen({ navigation }: any) {
       return <EmptyState icon="👥" title="No Groups Data" message="Group activity will appear here" />;
     }
     return groups.map(group => (
-      <View key={group.id} style={[
-        styles.groupCard,
-        group.isRisky && styles.groupCardRisky,
-      ]}>
+      <TouchableOpacity
+        key={group.id}
+        style={[styles.groupCard, group.isRisky && styles.groupCardRisky]}
+        onPress={() => navigation.navigate('GroupDetail', { group })}>
         <View style={styles.groupHeader}>
           <View style={[
             styles.groupIcon,
             { backgroundColor: group.isRisky ? '#FEE2E2' : '#DBEAFE' },
           ]}>
-            <Text style={styles.groupIconText}>
-              {group.isRisky ? '⚠️' : '👥'}
-            </Text>
+            <Text style={styles.groupIconText}>{group.isRisky ? '⚠️' : '👥'}</Text>
           </View>
           <View style={styles.groupInfo}>
             <Text style={styles.groupName}>{group.name}</Text>
@@ -163,6 +153,7 @@ export default function ActivityScreen({ navigation }: any) {
               <Text style={styles.riskyText}>RISKY</Text>
             </View>
           )}
+          <Text style={styles.groupArrow}>›</Text>
         </View>
         <Text style={styles.groupDesc}>{group.description}</Text>
         {group.isRisky && group.riskKeywords && (
@@ -177,13 +168,12 @@ export default function ActivityScreen({ navigation }: any) {
             </View>
           </View>
         )}
-      </View>
+      </TouchableOpacity>
     ));
   };
 
   return (
     <View style={styles.container}>
-      {/* ===== HEADER ===== */}
       <View style={styles.header}>
         <TouchableOpacity
           onPress={() => navigation.goBack()}
@@ -194,7 +184,6 @@ export default function ActivityScreen({ navigation }: any) {
         <View style={{ width: 40 }} />
       </View>
 
-      {/* ===== FUNCTIONAL TABS ===== */}
       <View style={styles.tabs}>
         {([
           { key: 'games' as TabType, label: 'Games', count: games.length },
@@ -212,7 +201,6 @@ export default function ActivityScreen({ navigation }: any) {
         ))}
       </View>
 
-      {/* ===== TAB CONTENT ===== */}
       <ScrollView
         style={styles.content}
         refreshControl={
@@ -237,14 +225,11 @@ const styles = StyleSheet.create({
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
   backText: { fontSize: 32, color: '#374151' },
   headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', color: '#1F2937', textAlign: 'center' },
-
-  // Tabs
   tabs: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#FFFFFF', gap: 8 },
   tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: '#F3F4F6' },
   tabActive: { backgroundColor: '#3B82F6' },
   tabText: { fontSize: 14, fontWeight: '500', color: '#6B7280' },
   tabTextActive: { color: '#FFFFFF' },
-
   content: { flex: 1, padding: 20 },
 
   // Games
@@ -264,9 +249,11 @@ const styles = StyleSheet.create({
   gameTags: { flexDirection: 'row', gap: 6, marginBottom: 8 },
   tag: { backgroundColor: '#DBEAFE', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   tagGreen: { backgroundColor: '#D1FAE5' },
+  tagYellow: { backgroundColor: '#FEF3C7' },
   tagOrange: { backgroundColor: '#FED7AA' },
   tagText: { fontSize: 11, fontWeight: '600', color: '#1E40AF' },
   tagTextGreen: { color: '#065F46' },
+  tagTextYellow: { color: '#854D0E' },
   tagTextOrange: { color: '#9A3412' },
   gameStats: { flexDirection: 'row', alignItems: 'center' },
   statText: { fontSize: 14, color: '#6B7280' },
@@ -279,9 +266,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#E5E7EB',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  friendAvatar: {
-    width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12,
-  },
+  friendAvatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   friendAvatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
   friendInfo: { flex: 1 },
   friendName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
@@ -301,15 +286,14 @@ const styles = StyleSheet.create({
   },
   groupCardRisky: { borderColor: '#FCA5A5', borderWidth: 2 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  groupIcon: {
-    width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12,
-  },
+  groupIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   groupIconText: { fontSize: 22 },
   groupInfo: { flex: 1 },
   groupName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 2 },
   groupMembers: { fontSize: 13, color: '#6B7280' },
   riskyBadge: { backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   riskyText: { color: '#991B1B', fontSize: 10, fontWeight: '700' },
+  groupArrow: { fontSize: 24, color: '#9CA3AF', marginLeft: 8 },
   groupDesc: { fontSize: 14, color: '#6B7280', lineHeight: 20, marginBottom: 8 },
   keywordsContainer: { marginTop: 4 },
   keywordsLabel: { fontSize: 12, color: '#991B1B', fontWeight: '600', marginBottom: 6 },

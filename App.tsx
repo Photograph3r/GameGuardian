@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Text } from 'react-native';
 import AuthService from './src/services/AuthService';
 import StorageService from './src/services/StorageService';
+import { ThemeProvider } from './src/context/ThemeContext';
 
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -16,37 +17,71 @@ import AlertsScreen from './src/screens/AlertsScreen';
 import AlertDetailScreen from './src/screens/AlertDetailScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AddChildScreen from './src/screens/AddChildScreen';
-
 import ScreenTimeLimitsScreen from './src/screens/ScreenTimeLimitsScreen';
 import GameBlocklistScreen from './src/screens/GameBlocklistScreen';
 import QuietHoursScreen from './src/screens/QuietHoursScreen';
+import AnalyticsDashboardScreen from './src/screens/AnalyticsDashboardScreen';
+import GroupDetailScreen from './src/screens/GroupDetailScreen';
+
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 export const AuthContext = createContext<{ logout: () => void }>({ logout: () => {} });
 
+// ============================================
+// DASHBOARD STACK
+// ============================================
 function DashboardStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="DashboardHome" component={DashboardScreen} />
-      <Stack.Screen name="Activity" component={ActivityScreen} />
       <Stack.Screen name="Alerts" component={AlertsScreen} />
       <Stack.Screen name="AlertDetail" component={AlertDetailScreen} />
       <Stack.Screen name="Profile" component={SettingsScreen} />
       <Stack.Screen name="AddChild" component={AddChildScreen} />
-	<Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
+      <Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
+      <Stack.Screen name="GameBlocklist" component={GameBlocklistScreen} />
+      <Stack.Screen name="QuietHours" component={QuietHoursScreen} />
+      <Stack.Screen name="Analytics" component={AnalyticsDashboardScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// ============================================
+// ACTIVITY STACK
+// ============================================
+function ActivityStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="ActivityHome" component={ActivityScreen} />
+      <Stack.Screen name="GroupDetail" component={GroupDetailScreen} />
+    </Stack.Navigator>
+  );
+}
+
+// ============================================
+// SETTINGS STACK
+// ============================================
+function SettingsStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="SettingsHome" component={SettingsScreen} />
+      <Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
       <Stack.Screen name="GameBlocklist" component={GameBlocklistScreen} />
       <Stack.Screen name="QuietHours" component={QuietHoursScreen} />
     </Stack.Navigator>
   );
 }
 
+// ============================================
+// MAIN TAB NAVIGATOR
+// ============================================
 function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
+       tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E5E7EB',
           borderTopWidth: 1,
@@ -65,7 +100,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="ActivityTab"
-        component={ActivityScreen}
+        component={ActivityStack}
         options={{
           tabBarLabel: 'Activity',
           tabBarIcon: () => <Text style={{ fontSize: 24 }}>📊</Text>,
@@ -73,13 +108,16 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Settings"
-        component={SettingsScreen}
+        component={SettingsStack}
         options={{ tabBarIcon: () => <Text style={{ fontSize: 24 }}>⚙️</Text> }}
       />
     </Tab.Navigator>
   );
 }
 
+// ============================================
+// MAIN APP
+// ============================================
 export default function App() {
   const [appState, setAppState] = useState<'loading' | 'onboarding' | 'login' | 'app'>('loading');
 
@@ -119,44 +157,46 @@ export default function App() {
   }
 
   return (
-    <AuthContext.Provider value={{ logout: handleLogout }}>
-      <NavigationContainer key={appState}>
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {appState === 'onboarding' && (
-            <Stack.Screen name="Onboarding">
-              {(props) => (
-                <OnboardingScreen
-                  {...props}
-                  navigation={{
-                    ...props.navigation,
-                    replace: () => handleOnboardingComplete(),
-                  }}
+    <ThemeProvider>
+      <AuthContext.Provider value={{ logout: handleLogout }}>
+        <NavigationContainer key={appState}>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            {appState === 'onboarding' && (
+              <Stack.Screen name="Onboarding">
+                {(props) => (
+                  <OnboardingScreen
+                    {...props}
+                    navigation={{
+                      ...props.navigation,
+                      replace: () => handleOnboardingComplete(),
+                    }}
+                  />
+                )}
+              </Stack.Screen>
+            )}
+            {appState === 'login' && (
+              <>
+                <Stack.Screen name="Login">
+                  {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
+                </Stack.Screen>
+                <Stack.Screen name="Signup">
+                  {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
+                </Stack.Screen>
+              </>
+            )}
+            {appState === 'app' && (
+              <>
+                <Stack.Screen name="Splash" component={SplashScreen} />
+                <Stack.Screen
+                  name="MainApp"
+                  component={MainTabs}
+                  options={{ gestureEnabled: false }}
                 />
-              )}
-            </Stack.Screen>
-          )}
-          {appState === 'login' && (
-            <>
-              <Stack.Screen name="Login">
-                {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
-              </Stack.Screen>
-              <Stack.Screen name="Signup">
-                {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
-              </Stack.Screen>
-            </>
-          )}
-          {appState === 'app' && (
-            <>
-              <Stack.Screen name="Splash" component={SplashScreen} />
-              <Stack.Screen
-                name="MainApp"
-                component={MainTabs}
-                options={{ gestureEnabled: false }}
-              />
-            </>
-          )}
-        </Stack.Navigator>
-      </NavigationContainer>
-    </AuthContext.Provider>
+              </>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AuthContext.Provider>
+    </ThemeProvider>
   );
 }

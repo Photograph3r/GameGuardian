@@ -1,8 +1,4 @@
-﻿// ALERTS SCREEN
-// Shows all safety alerts in a list
-// Uses API service layer + persists read state
-
-import React, { useState, useEffect, useCallback } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,11 +11,13 @@ import ApiService from '../services/ApiService';
 import StorageService from '../services/StorageService';
 import { LoadingState, ErrorState, EmptyState } from '../components/SharedStates';
 import { Alert } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 type FilterType = 'all' | 'high' | 'medium' | 'low';
 type SortType = 'newest' | 'oldest';
 
 export default function AlertsScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const [alerts, setAlerts] = useState<Alert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,9 +43,7 @@ export default function AlertsScreen({ navigation }: any) {
     }
   }, []);
 
-  useEffect(() => {
-    fetchAlerts();
-  }, [fetchAlerts]);
+  useEffect(() => { fetchAlerts(); }, [fetchAlerts]);
 
   const onRefresh = useCallback(() => {
     setRefreshing(true);
@@ -58,9 +54,7 @@ export default function AlertsScreen({ navigation }: any) {
     if (!alert.isRead) {
       await StorageService.markAlertRead(alert.id);
       await ApiService.markAlertRead(alert.id);
-      setAlerts(prev =>
-        prev.map(a => (a.id === alert.id ? { ...a, isRead: true } : a)),
-      );
+      setAlerts(prev => prev.map(a => a.id === alert.id ? { ...a, isRead: true } : a));
     }
     navigation.navigate('AlertDetail', { alert });
   };
@@ -68,9 +62,8 @@ export default function AlertsScreen({ navigation }: any) {
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
     const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffHours / 24);
     if (diffHours < 1) return 'Just now';
     if (diffHours < 24) return `${diffHours}h ago`;
     if (diffDays === 1) return 'Yesterday';
@@ -92,6 +85,10 @@ export default function AlertsScreen({ navigation }: any) {
       case 'rapid-friends': return '👥';
       case 'risky-group': return '🛡️';
       case 'out-of-age-gaming': return '⚠️';
+      case 'excessive-playtime': return '⏳';
+      case 'inappropriate-chat': return '💬';
+      case 'purchase-attempt': return '💳';
+      case 'new-game-flagged': return '🎮';
       default: return '⚠️';
     }
   };
@@ -99,10 +96,7 @@ export default function AlertsScreen({ navigation }: any) {
   if (loading) return <LoadingState message="Loading alerts..." />;
   if (error) return <ErrorState message={error} onRetry={fetchAlerts} />;
 
-  let filteredAlerts = filter === 'all'
-    ? alerts
-    : alerts.filter(a => a.severity === filter);
-
+  let filteredAlerts = filter === 'all' ? alerts : alerts.filter(a => a.severity === filter);
   filteredAlerts = [...filteredAlerts].sort((a, b) => {
     const dateA = new Date(a.timestamp).getTime();
     const dateB = new Date(b.timestamp).getTime();
@@ -112,85 +106,76 @@ export default function AlertsScreen({ navigation }: any) {
   const unreadCount = alerts.filter(a => !a.isRead).length;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backText}>‹</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* HEADER */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={[styles.backText, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Alerts</Text>
-        {unreadCount > 0 && (
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Alerts</Text>
+        {unreadCount > 0 ? (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{unreadCount} New</Text>
           </View>
-        )}
-        {unreadCount === 0 && <View style={{ width: 40 }} />}
+        ) : <View style={{ width: 60 }} />}
       </View>
 
-      <View style={styles.filterRow}>
+      {/* FILTERS */}
+      <View style={[styles.filterRow, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         {(['all', 'high', 'medium', 'low'] as FilterType[]).map(f => (
           <TouchableOpacity
             key={f}
-            style={[styles.filterButton, filter === f && styles.filterButtonActive]}
+            style={[styles.filterButton, { backgroundColor: filter === f ? colors.primary : colors.background }]}
             onPress={() => setFilter(f)}>
-            <Text style={[styles.filterText, filter === f && styles.filterTextActive]}>
+            <Text style={[styles.filterText, { color: filter === f ? '#FFFFFF' : colors.textSecondary }]}>
               {f === 'all' ? 'All' : f.charAt(0).toUpperCase() + f.slice(1)}
             </Text>
           </TouchableOpacity>
         ))}
         <TouchableOpacity
-          style={styles.sortButton}
+          style={[styles.sortButton, { backgroundColor: colors.background, borderColor: colors.surfaceBorder }]}
           onPress={() => setSort(sort === 'newest' ? 'oldest' : 'newest')}>
-          <Text style={styles.sortText}>
+          <Text style={[styles.sortText, { color: colors.textSecondary }]}>
             {sort === 'newest' ? '↓ New' : '↑ Old'}
           </Text>
         </TouchableOpacity>
       </View>
 
       {filteredAlerts.length === 0 ? (
-        <EmptyState
-          icon="🔍"
-          title="No Alerts Found"
-          message={`No ${filter} severity alerts to show`}
-        />
+        <EmptyState icon="🔍" title="No Alerts Found" message={`No ${filter} severity alerts`} />
       ) : (
         <ScrollView
           style={styles.content}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }>
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {filteredAlerts.map(alert => {
-            const colors = getSeverityColor(alert.severity);
-            const icon = getAlertIcon(alert.type);
-
+            const sColors = getSeverityColor(alert.severity);
             return (
               <TouchableOpacity
                 key={alert.id}
                 style={[
                   styles.alertCard,
+                  { backgroundColor: colors.cardBg, borderColor: alert.isRead ? colors.cardBorder : '#93C5FD' },
                   !alert.isRead && styles.alertCardUnread,
                 ]}
                 onPress={() => handleAlertPress(alert)}>
-                <View style={[styles.iconContainer, { backgroundColor: colors.bg }]}>
-                  <Text style={styles.alertIcon}>{icon}</Text>
+                <View style={[styles.iconContainer, { backgroundColor: sColors.bg }]}>
+                  <Text style={styles.alertIcon}>{getAlertIcon(alert.type)}</Text>
                 </View>
-
                 <View style={styles.alertContent}>
                   <View style={styles.alertHeader}>
-                    <Text style={styles.alertTitle}>{alert.title}</Text>
+                    <Text style={[styles.alertTitle, { color: colors.text }]}>{alert.title}</Text>
                     {!alert.isRead && <View style={styles.unreadDot} />}
                   </View>
-                  <Text style={styles.alertMessage} numberOfLines={2}>
+                  <Text style={[styles.alertMessage, { color: colors.textSecondary }]} numberOfLines={2}>
                     {alert.message}
                   </Text>
                   <View style={styles.alertFooter}>
-                    <View style={[styles.severityBadge, { backgroundColor: colors.bg }]}>
-                      <Text style={[styles.severityText, { color: colors.text }]}>
+                    <View style={[styles.severityBadge, { backgroundColor: sColors.bg }]}>
+                      <Text style={[styles.severityText, { color: sColors.text }]}>
                         {alert.severity.toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={styles.timestamp}>
+                    <Text style={[styles.timestamp, { color: colors.textMuted }]}>
                       {formatTimestamp(alert.timestamp)}
                     </Text>
                   </View>
@@ -206,50 +191,44 @@ export default function AlertsScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1 },
   header: {
-    backgroundColor: '#FFFFFF', paddingTop: 50, paddingBottom: 15, paddingHorizontal: 20,
+    paddingTop: 50, paddingBottom: 15, paddingHorizontal: 20,
     flexDirection: 'row', alignItems: 'center',
+    borderBottomWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 3,
   },
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center', marginRight: 8 },
-  backText: { fontSize: 32, color: '#374151' },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', color: '#1F2937' },
+  backText: { fontSize: 32 },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '600' },
   badge: { backgroundColor: '#FEE2E2', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   badgeText: { color: '#991B1B', fontSize: 12, fontWeight: '600' },
   filterRow: {
     flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 12,
-    backgroundColor: '#FFFFFF', gap: 8, alignItems: 'center',
-    borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
+    gap: 8, alignItems: 'center', borderBottomWidth: 1,
   },
-  filterButton: {
-    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20,
-    backgroundColor: '#F3F4F6',
-  },
-  filterButtonActive: { backgroundColor: '#4F46E5' },
-  filterText: { fontSize: 13, fontWeight: '500', color: '#6B7280' },
-  filterTextActive: { color: '#FFFFFF' },
+  filterButton: { paddingHorizontal: 14, paddingVertical: 7, borderRadius: 20 },
+  filterText: { fontSize: 13, fontWeight: '500' },
   sortButton: {
     marginLeft: 'auto', paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 20, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 20, borderWidth: 1,
   },
-  sortText: { fontSize: 13, fontWeight: '500', color: '#6B7280' },
+  sortText: { fontSize: 13, fontWeight: '500' },
   content: { flex: 1, padding: 20 },
   alertCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, flexDirection: 'row', marginBottom: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 15, padding: 15, flexDirection: 'row', marginBottom: 12, borderWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  alertCardUnread: { borderColor: '#93C5FD', borderWidth: 2, shadowColor: '#3B82F6', shadowOpacity: 0.15 },
+  alertCardUnread: { borderWidth: 2, shadowColor: '#3B82F6', shadowOpacity: 0.15 },
   iconContainer: { width: 50, height: 50, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   alertIcon: { fontSize: 24 },
   alertContent: { flex: 1 },
   alertHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 6 },
-  alertTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: '#1F2937' },
+  alertTitle: { flex: 1, fontSize: 16, fontWeight: '600' },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6', marginLeft: 8 },
-  alertMessage: { fontSize: 14, color: '#6B7280', marginBottom: 10, lineHeight: 20 },
+  alertMessage: { fontSize: 14, marginBottom: 10, lineHeight: 20 },
   alertFooter: { flexDirection: 'row', alignItems: 'center' },
   severityBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, marginRight: 8 },
   severityText: { fontSize: 10, fontWeight: '600' },
-  timestamp: { fontSize: 12, color: '#9CA3AF' },
+  timestamp: { fontSize: 12 },
 });
