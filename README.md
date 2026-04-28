@@ -8,7 +8,15 @@ A React Native mobile application that helps parents monitor their children's Ro
 
 &#x20;Project Status
 
-
+ \*\*New in Milestone 3\*\*
+- Dark mode and high contrast mode (ThemeContext)
+- Pattern detection algorithm (6 behavioral patterns)
+- Analytics dashboard with risk scoring
+- Clickable group reviews with recommended actions
+- Functional parental controls (Screen Time, Game Blocklist, Quiet Hours)
+- Add Child screen with Roblox account linking
+- 12 alert types including purchase attempts and inappropriate chat
+- Usability testing completed (2 think-aloud sessions)
 
 \*\*Milestone 2 — Functionally Complete\*\*
 
