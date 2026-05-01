@@ -6,7 +6,6 @@ import { Text } from 'react-native';
 import AuthService from './src/services/AuthService';
 import StorageService from './src/services/StorageService';
 import { ThemeProvider } from './src/context/ThemeContext';
-import { RobloxAuthProvider } from './src/components/SharedStates';
 
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -23,15 +22,14 @@ import GameBlocklistScreen from './src/screens/GameBlocklistScreen';
 import QuietHoursScreen from './src/screens/QuietHoursScreen';
 import AnalyticsDashboardScreen from './src/screens/AnalyticsDashboardScreen';
 import GroupDetailScreen from './src/screens/GroupDetailScreen';
+import ChildSetupScreen from './src/screens/ChildSetupScreen';
+import ChildrenScreen from './src/screens/ChildrenScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
 export const AuthContext = createContext<{ logout: () => void }>({ logout: () => {} });
 
-// ============================================
-// DASHBOARD STACK
-// ============================================
 function DashboardStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -40,6 +38,7 @@ function DashboardStack() {
       <Stack.Screen name="AlertDetail" component={AlertDetailScreen} />
       <Stack.Screen name="Profile" component={SettingsScreen} />
       <Stack.Screen name="AddChild" component={AddChildScreen} />
+      <Stack.Screen name="Children" component={ChildrenScreen} />
       <Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
       <Stack.Screen name="GameBlocklist" component={GameBlocklistScreen} />
       <Stack.Screen name="QuietHours" component={QuietHoursScreen} />
@@ -48,9 +47,6 @@ function DashboardStack() {
   );
 }
 
-// ============================================
-// ACTIVITY STACK
-// ============================================
 function ActivityStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -60,9 +56,6 @@ function ActivityStack() {
   );
 }
 
-// ============================================
-// SETTINGS STACK
-// ============================================
 function SettingsStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -70,13 +63,12 @@ function SettingsStack() {
       <Stack.Screen name="ScreenTimeLimits" component={ScreenTimeLimitsScreen} />
       <Stack.Screen name="GameBlocklist" component={GameBlocklistScreen} />
       <Stack.Screen name="QuietHours" component={QuietHoursScreen} />
+      <Stack.Screen name="AddChild" component={AddChildScreen} />
+      <Stack.Screen name="Children" component={ChildrenScreen} />
     </Stack.Navigator>
   );
 }
 
-// ============================================
-// MAIN TAB NAVIGATOR
-// ============================================
 function MainTabs() {
   return (
     <Tab.Navigator
@@ -116,11 +108,8 @@ function MainTabs() {
   );
 }
 
-// ============================================
-// MAIN APP
-// ============================================
 export default function App() {
-  const [appState, setAppState] = useState<'loading' | 'onboarding' | 'login' | 'app'>('loading');
+  const [appState, setAppState] = useState<'loading' | 'onboarding' | 'login' | 'setup' | 'app'>('loading');
 
   const checkState = async () => {
     const onboarded = await StorageService.hasCompletedOnboarding();
@@ -131,6 +120,11 @@ export default function App() {
     const authenticated = await AuthService.isAuthenticated();
     if (!authenticated) {
       setAppState('login');
+      return;
+    }
+    const hasChild = await StorageService.hasChildProfile();
+    if (!hasChild) {
+      setAppState('setup');
       return;
     }
     setAppState('app');
@@ -149,57 +143,72 @@ export default function App() {
     setAppState('login');
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
+    const hasChild = await StorageService.hasChildProfile();
+    if (!hasChild) {
+      setAppState('setup');
+    } else {
+      setAppState('app');
+    }
+  };
+
+  const handleSetupComplete = () => {
     setAppState('app');
   };
 
-  if (appState === 'loading') {
-    return null;
-  }
+  if (appState === 'loading') return null;
 
   return (
-    <RobloxAuthProvider>
-      <ThemeProvider>
-        <AuthContext.Provider value={{ logout: handleLogout }}>
-          <NavigationContainer key={appState}>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              {appState === 'onboarding' && (
-                <Stack.Screen name="Onboarding">
-                  {(props) => (
-                    <OnboardingScreen
-                      {...props}
-                      navigation={{
-                        ...props.navigation,
-                        replace: () => handleOnboardingComplete(),
-                      }}
-                    />
-                  )}
-                </Stack.Screen>
-              )}
-              {appState === 'login' && (
-                <>
-                  <Stack.Screen name="Login">
-                    {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
-                  </Stack.Screen>
-                  <Stack.Screen name="Signup">
-                    {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
-                  </Stack.Screen>
-                </>
-              )}
-              {appState === 'app' && (
-                <>
-                  <Stack.Screen name="Splash" component={SplashScreen} />
-                  <Stack.Screen
-                    name="MainApp"
-                    component={MainTabs}
-                    options={{ gestureEnabled: false }}
+    <ThemeProvider>
+      <AuthContext.Provider value={{ logout: handleLogout }}>
+        <NavigationContainer key={appState}>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+
+            {appState === 'onboarding' && (
+              <Stack.Screen name="Onboarding">
+                {(props) => (
+                  <OnboardingScreen
+                    {...props}
+                    navigation={{
+                      ...props.navigation,
+                      replace: () => handleOnboardingComplete(),
+                    }}
                   />
-                </>
-              )}
-            </Stack.Navigator>
-          </NavigationContainer>
-        </AuthContext.Provider>
-      </ThemeProvider>
-    </RobloxAuthProvider>
+                )}
+              </Stack.Screen>
+            )}
+
+            {appState === 'login' && (
+              <>
+                <Stack.Screen name="Login">
+                  {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
+                </Stack.Screen>
+                <Stack.Screen name="Signup">
+                  {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
+                </Stack.Screen>
+              </>
+            )}
+
+            {appState === 'setup' && (
+              <Stack.Screen name="ChildSetup">
+                {() => <ChildSetupScreen onSetupComplete={handleSetupComplete} />}
+              </Stack.Screen>
+            )}
+
+            {appState === 'app' && (
+              <>
+                <Stack.Screen name="Splash" component={SplashScreen} />
+                <Stack.Screen
+                  name="MainApp"
+                  component={MainTabs}
+                  options={{ gestureEnabled: false }}
+                />
+              </>
+            )}
+
+          </Stack.Navigator>
+        </NavigationContainer>
+      </AuthContext.Provider>
+    </ThemeProvider>
   );
 }
