@@ -10,10 +10,12 @@ import {
 import ApiService from '../services/ApiService';
 import { LoadingState, ErrorState, EmptyState } from '../components/SharedStates';
 import { Game, Friend, Group } from '../types';
+import { useTheme } from '../context/ThemeContext';
 
 type TabType = 'games' | 'friends' | 'groups';
 
 export default function ActivityScreen({ navigation }: any) {
+  const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState<TabType>('games');
   const [games, setGames] = useState<Game[]>([]);
   const [friends, setFriends] = useState<Friend[]>([]);
@@ -58,16 +60,16 @@ export default function ActivityScreen({ navigation }: any) {
       return <EmptyState icon="🎮" title="No Games Yet" message="Game activity will appear here" />;
     }
     return games.map(game => (
-      <View key={game.id} style={styles.gameCard}>
-        <View style={styles.gameIcon}>
+      <View key={game.id} style={[styles.gameCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
+        <View style={[styles.gameIcon, { backgroundColor: colors.primary }]}>
           <Text style={styles.gameIconText}>{game.icon}</Text>
         </View>
         <View style={styles.gameInfo}>
-          <Text style={styles.gameName}>{game.name}</Text>
-          <Text style={styles.gameCreator}>by {game.creator}</Text>
+          <Text style={[styles.gameName, { color: colors.text }]}>{game.name}</Text>
+          <Text style={[styles.gameCreator, { color: colors.textSecondary }]}>by {game.creator}</Text>
           <View style={styles.gameTags}>
-            <View style={styles.tag}>
-              <Text style={styles.tagText}>{game.genre}</Text>
+            <View style={[styles.tag, { backgroundColor: colors.primaryLight }]}>
+              <Text style={[styles.tagText, { color: colors.primary }]}>{game.genre}</Text>
             </View>
             <View style={[
               styles.tag,
@@ -84,9 +86,9 @@ export default function ActivityScreen({ navigation }: any) {
             </View>
           </View>
           <View style={styles.gameStats}>
-            <Text style={styles.statText}>⏱️ {game.playtime} min</Text>
-            <Text style={styles.separator}>•</Text>
-            <Text style={styles.statText}>{game.lastPlayed}</Text>
+            <Text style={[styles.statText, { color: colors.textSecondary }]}>⏱️ {game.playtime} min</Text>
+            <Text style={[styles.separator, { color: colors.surfaceBorder }]}>•</Text>
+            <Text style={[styles.statText, { color: colors.textSecondary }]}>{game.lastPlayed}</Text>
           </View>
         </View>
       </View>
@@ -98,7 +100,7 @@ export default function ActivityScreen({ navigation }: any) {
       return <EmptyState icon="👥" title="No Friends Data" message="Friend activity will appear here" />;
     }
     return friends.map(friend => (
-      <View key={friend.id} style={styles.friendCard}>
+      <View key={friend.id} style={[styles.friendCard, { backgroundColor: colors.cardBg, borderColor: colors.cardBorder }]}>
         <View style={[
           styles.friendAvatar,
           { backgroundColor: friend.status === 'new' ? '#8B5CF6' : '#6B7280' },
@@ -108,16 +110,16 @@ export default function ActivityScreen({ navigation }: any) {
           </Text>
         </View>
         <View style={styles.friendInfo}>
-          <Text style={styles.friendName}>{friend.username}</Text>
-          <Text style={styles.friendDate}>Added {friend.addedDate}</Text>
+          <Text style={[styles.friendName, { color: colors.text }]}>{friend.username}</Text>
+          <Text style={[styles.friendDate, { color: colors.textSecondary }]}>Added {friend.addedDate}</Text>
         </View>
         <View style={[
           styles.statusBadge,
-          friend.status === 'new' ? styles.statusNew : styles.statusExisting,
+          friend.status === 'new' ? styles.statusNew : { backgroundColor: colors.surface },
         ]}>
           <Text style={[
             styles.statusText,
-            friend.status === 'new' ? styles.statusTextNew : styles.statusTextExisting,
+            friend.status === 'new' ? styles.statusTextNew : { color: colors.textSecondary },
           ]}>
             {friend.status === 'new' ? 'NEW' : 'FRIEND'}
           </Text>
@@ -133,18 +135,22 @@ export default function ActivityScreen({ navigation }: any) {
     return groups.map(group => (
       <TouchableOpacity
         key={group.id}
-        style={[styles.groupCard, group.isRisky && styles.groupCardRisky]}
+        style={[
+          styles.groupCard,
+          { backgroundColor: colors.cardBg, borderColor: group.isRisky ? '#FCA5A5' : colors.cardBorder },
+          group.isRisky && styles.groupCardRisky,
+        ]}
         onPress={() => navigation.navigate('GroupDetail', { group })}>
         <View style={styles.groupHeader}>
           <View style={[
             styles.groupIcon,
-            { backgroundColor: group.isRisky ? '#FEE2E2' : '#DBEAFE' },
+            { backgroundColor: group.isRisky ? '#FEE2E2' : colors.primaryLight },
           ]}>
             <Text style={styles.groupIconText}>{group.isRisky ? '⚠️' : '👥'}</Text>
           </View>
           <View style={styles.groupInfo}>
-            <Text style={styles.groupName}>{group.name}</Text>
-            <Text style={styles.groupMembers}>
+            <Text style={[styles.groupName, { color: colors.text }]}>{group.name}</Text>
+            <Text style={[styles.groupMembers, { color: colors.textSecondary }]}>
               {group.memberCount.toLocaleString()} members
             </Text>
           </View>
@@ -153,9 +159,9 @@ export default function ActivityScreen({ navigation }: any) {
               <Text style={styles.riskyText}>RISKY</Text>
             </View>
           )}
-          <Text style={styles.groupArrow}>›</Text>
+          <Text style={[styles.groupArrow, { color: colors.textMuted }]}>›</Text>
         </View>
-        <Text style={styles.groupDesc}>{group.description}</Text>
+        <Text style={[styles.groupDesc, { color: colors.textSecondary }]}>{group.description}</Text>
         {group.isRisky && group.riskKeywords && (
           <View style={styles.keywordsContainer}>
             <Text style={styles.keywordsLabel}>Flagged keywords:</Text>
@@ -173,18 +179,18 @@ export default function ActivityScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={styles.backButton}>
-          <Text style={styles.backText}>‹</Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      {/* Header */}
+      <View style={[styles.header, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <Text style={[styles.backText, { color: colors.text }]}>‹</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Activity</Text>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Activity</Text>
         <View style={{ width: 40 }} />
       </View>
 
-      <View style={styles.tabs}>
+      {/* Tabs */}
+      <View style={[styles.tabs, { backgroundColor: colors.surface, borderBottomColor: colors.surfaceBorder }]}>
         {([
           { key: 'games' as TabType, label: 'Games', count: games.length },
           { key: 'friends' as TabType, label: 'Friends', count: friends.length },
@@ -192,17 +198,24 @@ export default function ActivityScreen({ navigation }: any) {
         ]).map(tab => (
           <TouchableOpacity
             key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            style={[
+              styles.tab,
+              { backgroundColor: activeTab === tab.key ? colors.primary : colors.background },
+            ]}
             onPress={() => setActiveTab(tab.key)}>
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>
+            <Text style={[
+              styles.tabText,
+              { color: activeTab === tab.key ? '#FFFFFF' : colors.textSecondary },
+            ]}>
               {tab.label} ({tab.count})
             </Text>
           </TouchableOpacity>
         ))}
       </View>
 
+      {/* Content */}
       <ScrollView
-        style={styles.content}
+        style={[styles.content, { backgroundColor: colors.background }]}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }>
@@ -216,85 +229,75 @@ export default function ActivityScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  container: { flex: 1 },
   header: {
-    backgroundColor: '#FFFFFF', paddingTop: 50, paddingBottom: 15, paddingHorizontal: 20,
-    flexDirection: 'row', alignItems: 'center',
+    paddingTop: 50, paddingBottom: 15, paddingHorizontal: 20,
+    flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 3,
   },
   backButton: { width: 40, height: 40, justifyContent: 'center', alignItems: 'center' },
-  backText: { fontSize: 32, color: '#374151' },
-  headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', color: '#1F2937', textAlign: 'center' },
-  tabs: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 15, backgroundColor: '#FFFFFF', gap: 8 },
-  tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, backgroundColor: '#F3F4F6' },
-  tabActive: { backgroundColor: '#3B82F6' },
-  tabText: { fontSize: 14, fontWeight: '500', color: '#6B7280' },
-  tabTextActive: { color: '#FFFFFF' },
+  backText: { fontSize: 32 },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '600', textAlign: 'center' },
+  tabs: { flexDirection: 'row', paddingHorizontal: 20, paddingVertical: 12, gap: 8, borderBottomWidth: 1 },
+  tab: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  tabText: { fontSize: 14, fontWeight: '500' },
   content: { flex: 1, padding: 20 },
 
   // Games
   gameCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, flexDirection: 'row', marginBottom: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 15, padding: 15, flexDirection: 'row', marginBottom: 12, borderWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  gameIcon: {
-    width: 64, height: 64, borderRadius: 12, backgroundColor: '#4F46E5',
-    justifyContent: 'center', alignItems: 'center', marginRight: 15,
-  },
+  gameIcon: { width: 64, height: 64, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 15 },
   gameIconText: { fontSize: 32 },
   gameInfo: { flex: 1 },
-  gameName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
-  gameCreator: { fontSize: 14, color: '#6B7280', marginBottom: 8 },
+  gameName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  gameCreator: { fontSize: 14, marginBottom: 8 },
   gameTags: { flexDirection: 'row', gap: 6, marginBottom: 8 },
-  tag: { backgroundColor: '#DBEAFE', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
+  tag: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
   tagGreen: { backgroundColor: '#D1FAE5' },
   tagYellow: { backgroundColor: '#FEF3C7' },
   tagOrange: { backgroundColor: '#FED7AA' },
-  tagText: { fontSize: 11, fontWeight: '600', color: '#1E40AF' },
+  tagText: { fontSize: 11, fontWeight: '600' },
   tagTextGreen: { color: '#065F46' },
   tagTextYellow: { color: '#854D0E' },
   tagTextOrange: { color: '#9A3412' },
   gameStats: { flexDirection: 'row', alignItems: 'center' },
-  statText: { fontSize: 14, color: '#6B7280' },
-  separator: { marginHorizontal: 8, color: '#D1D5DB' },
+  statText: { fontSize: 14 },
+  separator: { marginHorizontal: 8 },
 
   // Friends
   friendCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, flexDirection: 'row',
-    alignItems: 'center', marginBottom: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 15, padding: 15, flexDirection: 'row',
+    alignItems: 'center', marginBottom: 12, borderWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
   friendAvatar: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   friendAvatarText: { color: '#FFFFFF', fontSize: 18, fontWeight: 'bold' },
   friendInfo: { flex: 1 },
-  friendName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 4 },
-  friendDate: { fontSize: 14, color: '#6B7280' },
+  friendName: { fontSize: 16, fontWeight: '600', marginBottom: 4 },
+  friendDate: { fontSize: 14 },
   statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   statusNew: { backgroundColor: '#EDE9FE' },
-  statusExisting: { backgroundColor: '#F3F4F6' },
   statusText: { fontSize: 10, fontWeight: '700' },
   statusTextNew: { color: '#7C3AED' },
-  statusTextExisting: { color: '#6B7280' },
 
   // Groups
   groupCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 15, padding: 15, marginBottom: 12,
-    borderWidth: 1, borderColor: '#E5E7EB',
+    borderRadius: 15, padding: 15, marginBottom: 12, borderWidth: 1,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 2,
   },
-  groupCardRisky: { borderColor: '#FCA5A5', borderWidth: 2 },
+  groupCardRisky: { borderWidth: 2 },
   groupHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   groupIcon: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
   groupIconText: { fontSize: 22 },
   groupInfo: { flex: 1 },
-  groupName: { fontSize: 16, fontWeight: '600', color: '#1F2937', marginBottom: 2 },
-  groupMembers: { fontSize: 13, color: '#6B7280' },
+  groupName: { fontSize: 16, fontWeight: '600', marginBottom: 2 },
+  groupMembers: { fontSize: 13 },
   riskyBadge: { backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   riskyText: { color: '#991B1B', fontSize: 10, fontWeight: '700' },
-  groupArrow: { fontSize: 24, color: '#9CA3AF', marginLeft: 8 },
-  groupDesc: { fontSize: 14, color: '#6B7280', lineHeight: 20, marginBottom: 8 },
+  groupArrow: { fontSize: 24, marginLeft: 8 },
+  groupDesc: { fontSize: 14, lineHeight: 20, marginBottom: 8 },
   keywordsContainer: { marginTop: 4 },
   keywordsLabel: { fontSize: 12, color: '#991B1B', fontWeight: '600', marginBottom: 6 },
   keywordTags: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
