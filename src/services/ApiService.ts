@@ -14,6 +14,7 @@ import {
   mockFriends,
   mockGroups,
 } from '../data/mockData';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const simulateNetworkDelay = (ms: number = 800): Promise<void> =>
   new Promise(resolve => setTimeout(resolve, ms));
@@ -29,7 +30,33 @@ async function apiRequest<T>(
   return fetcher();
 }
 
+// Roblox authenticated request helper
+async function robloxRequest<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const token = await AsyncStorage.getItem('@gameguardian_roblox_token');
+  if (!token) throw new Error('No Roblox access token found. Please log in.');
+
+  const response = await fetch(`https://apis.roblox.com${endpoint}`, {
+    ...options,
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`Roblox API error: ${err}`);
+  }
+
+  return response.json();
+}
+
 const ApiService = {
+  // --- Mock Methods (existing) ---
   getChildren: async (): Promise<Child[]> => {
     return apiRequest(() => mockChildren);
   },
@@ -67,6 +94,15 @@ const ApiService = {
 
   getActivitySummary: async (_childId?: string): Promise<ActivitySummary> => {
     return apiRequest(() => mockActivitySummary);
+  },
+
+  // --- Roblox Live Methods ---
+  getRobloxUser: async (): Promise<any> => {
+    return robloxRequest('/oauth/v1/userinfo');
+  },
+
+  getRobloxPlayerGames: async (userId: string): Promise<any> => {
+    return robloxRequest(`/cloud/v2/users/${userId}/games`);
   },
 };
 

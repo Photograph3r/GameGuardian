@@ -6,6 +6,7 @@ import { Text } from 'react-native';
 import AuthService from './src/services/AuthService';
 import StorageService from './src/services/StorageService';
 import { ThemeProvider } from './src/context/ThemeContext';
+import { RobloxAuthProvider } from './src/components/SharedStates';
 
 import LoginScreen from './src/screens/LoginScreen';
 import SignupScreen from './src/screens/SignupScreen';
@@ -81,7 +82,7 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={{
         headerShown: false,
-       tabBarStyle: {
+        tabBarStyle: {
           backgroundColor: '#FFFFFF',
           borderTopColor: '#E5E7EB',
           borderTopWidth: 1,
@@ -157,46 +158,48 @@ export default function App() {
   }
 
   return (
-    <ThemeProvider>
-      <AuthContext.Provider value={{ logout: handleLogout }}>
-        <NavigationContainer key={appState}>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {appState === 'onboarding' && (
-              <Stack.Screen name="Onboarding">
-                {(props) => (
-                  <OnboardingScreen
-                    {...props}
-                    navigation={{
-                      ...props.navigation,
-                      replace: () => handleOnboardingComplete(),
-                    }}
+    <RobloxAuthProvider>
+      <ThemeProvider>
+        <AuthContext.Provider value={{ logout: handleLogout }}>
+          <NavigationContainer key={appState}>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              {appState === 'onboarding' && (
+                <Stack.Screen name="Onboarding">
+                  {(props) => (
+                    <OnboardingScreen
+                      {...props}
+                      navigation={{
+                        ...props.navigation,
+                        replace: () => handleOnboardingComplete(),
+                      }}
+                    />
+                  )}
+                </Stack.Screen>
+              )}
+              {appState === 'login' && (
+                <>
+                  <Stack.Screen name="Login">
+                    {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
+                  </Stack.Screen>
+                  <Stack.Screen name="Signup">
+                    {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
+                  </Stack.Screen>
+                </>
+              )}
+              {appState === 'app' && (
+                <>
+                  <Stack.Screen name="Splash" component={SplashScreen} />
+                  <Stack.Screen
+                    name="MainApp"
+                    component={MainTabs}
+                    options={{ gestureEnabled: false }}
                   />
-                )}
-              </Stack.Screen>
-            )}
-            {appState === 'login' && (
-              <>
-                <Stack.Screen name="Login">
-                  {(props) => <LoginScreen {...props} onLoginSuccess={handleLogin} />}
-                </Stack.Screen>
-                <Stack.Screen name="Signup">
-                  {(props) => <SignupScreen {...props} onSignupSuccess={handleLogin} />}
-                </Stack.Screen>
-              </>
-            )}
-            {appState === 'app' && (
-              <>
-                <Stack.Screen name="Splash" component={SplashScreen} />
-                <Stack.Screen
-                  name="MainApp"
-                  component={MainTabs}
-                  options={{ gestureEnabled: false }}
-                />
-              </>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      </AuthContext.Provider>
-    </ThemeProvider>
+                </>
+              )}
+            </Stack.Navigator>
+          </NavigationContainer>
+        </AuthContext.Provider>
+      </ThemeProvider>
+    </RobloxAuthProvider>
   );
 }

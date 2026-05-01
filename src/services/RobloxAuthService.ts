@@ -1,11 +1,11 @@
 import * as AuthSession from 'expo-auth-session';
 import * as Crypto from 'expo-crypto';
 import * as WebBrowser from 'expo-web-browser';
-import Constants from 'expo-constants';
 
 WebBrowser.maybeCompleteAuthSession();
 
-const CLIENT_ID = Constants.expoConfig?.extra?.robloxClientId as string;
+const CLIENT_ID = '1337204989819130959';
+
 const REDIRECT_URI = AuthSession.makeRedirectUri({
   scheme: 'gameguardian',
   path: 'auth/callback',
@@ -32,7 +32,6 @@ export interface RobloxUser {
   picture: string;
 }
 
-// Generate PKCE code verifier
 export async function generateCodeVerifier(): Promise<string> {
   const random = await Crypto.getRandomBytesAsync(32);
   return btoa(String.fromCharCode(...random))
@@ -41,7 +40,6 @@ export async function generateCodeVerifier(): Promise<string> {
     .replace(/=/g, '');
 }
 
-// Generate PKCE code challenge
 export async function generateCodeChallenge(verifier: string): Promise<string> {
   const digest = await Crypto.digestStringAsync(
     Crypto.CryptoDigestAlgorithm.SHA256,
@@ -54,7 +52,6 @@ export async function generateCodeChallenge(verifier: string): Promise<string> {
     .replace(/=/g, '');
 }
 
-// Exchange auth code for tokens
 export async function exchangeCodeForTokens(
   code: string,
   codeVerifier: string
@@ -84,7 +81,6 @@ export async function exchangeCodeForTokens(
   };
 }
 
-// Fetch Roblox user info
 export async function fetchRobloxUser(accessToken: string): Promise<RobloxUser> {
   const response = await fetch('https://apis.roblox.com/oauth/v1/userinfo', {
     headers: { Authorization: `Bearer ${accessToken}` },
