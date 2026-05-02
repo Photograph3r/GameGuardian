@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Game Guardian — Know More. Worry Less.</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --indigo: #4F46E5;
+    --indigo-dark: #3730A3;
+    --indigo-light: #EEF2FF;
+    --violet: #7C3AED;
+    --green: #10B981;
+    --red: #EF4444;
+    --amber: #F59E0B;
+    --white: #FFFFFF;
+    --gray-50: #F9FAFB;
+    --gray-100: #F3F4F6;
+    --gray-200: #E5E7EB;
+    --gray-400: #9CA3AF;
+    --gray-600: #4B5563;
+    --gray-800: #1F2937;
+    --gray-900: #111827;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--gray-900);
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* ===== NAV ===== */
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 60px;
+    background: rgba(17, 24, 39, 0.85);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .nav-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    color: var(--white);
+    text-decoration: none;
+  }
+
+  .nav-logo-icon {
+    width: 36px;
+    height: 36px;
+    background: var(--indigo);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
+
+  .nav-links a {
+    color: var(--gray-400);
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s;
+  }
+
+  .nav-links a:hover { color: var(--white); }
+
+  .nav-cta {
+    background: var(--indigo);
+    color: var(--white);
+    padding: 10px 24px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.2s;
+  }
+
+  .nav-cta:hover {
+    background: var(--indigo-dark);
+    transform: translateY(-1px);
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 120px 40px 80px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(79, 70, 229, 0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 40% at 80% 60%, rgba(124, 58, 237, 0.15) 0%, transparent 50%);
+  }
+
+  .hero-grid {
+    position: absolute;
+    inset: 0;
+    background-image: linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(79, 70, 229, 0.15);
+    border: 1px solid rgba(79, 70, 229, 0.4);
+    color: #A5B4FC;
+    padding: 8px 18px;
+    border-radius: 100px;
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 32px;
+    position: relative;
+    animation: fadeInDown 0.6s ease both;
+  }
+
+  .hero-badge-dot {
+    width: 6px;
+    height: 6px;
+    background: #10B981;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(0.8); }
+  }
+
+  .hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(48px, 8vw, 88px);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 24px;
+    position: relative;
+    animation: fadeInUp 0.7s ease 0.1s both;
+  }
+
+  .hero h1 span {
+    background: linear-gradient(135deg, #818CF8, #C084FC, #F472B6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-sub {
+    font-size: clamp(17px, 2.5vw, 21px);
+    color: var(--gray-400);
+    max-width: 560px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    position: relative;
+    animation: fadeInUp 0.7s ease 0.2s both;
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+    position: relative;
+    animation: fadeInUp 0.7s ease 0.3s both;
+  }
+
+  .btn-primary {
+    background: var(--indigo);
+    color: var(--white);
+    padding: 16px 36px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.25s;
+    box-shadow: 0 0 0 0 rgba(79,70,229,0.4);
+  }
+
+  .btn-primary:hover {
+    background: var(--indigo-dark);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(79,70,229,0.4);
+  }
+
+  .btn-secondary {
+    background: rgba(255,255,255,0.06);
+    color: var(--white);
+    padding: 16px 36px;
+    border-radius: 100px;
+    text-decoration: none;
+    font-size: 17px;
+    font-weight: 500;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.25s;
+  }
+
+  .btn-secondary:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateY(-2px);
+  }
+
+  /* ===== PHONE MOCKUP ===== */
+  .phone-wrapper {
+    margin-top: 80px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    animation: fadeInUp 0.8s ease 0.4s both;
+  }
+
+  .phone-glow {
+    position: absolute;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(79,70,229,0.4) 0%, transparent 70%);
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    filter: blur(40px);
+  }
+
+  .phone {
+    width: 280px;
+    background: #1C1C1E;
+    border-radius: 44px;
+    padding: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    box-shadow: 0 40px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+    position: relative;
+  }
+
+  .phone-screen {
+    background: #4F46E5;
+    border-radius: 34px;
+    overflow: hidden;
+  }
+
+  .phone-header {
+    padding: 40px 20px 20px;
+    background: #4F46E5;
+  }
+
+  .phone-greeting {
+    font-size: 11px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 4px;
+  }
+
+  .phone-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: white;
+  }
+
+  .phone-child-card {
+    background: rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 12px;
+    margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .phone-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #8B5CF6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    color: white;
+    font-family: 'Syne', sans-serif;
+  }
+
+  .phone-child-name { font-size: 14px; color: white; font-weight: 600; }
+  .phone-child-user { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+  .phone-alert {
+    background: #EF4444;
+    margin: -8px 12px 0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+  }
+
+  .phone-alert-text { font-size: 12px; color: white; font-weight: 600; }
+  .phone-alert-sub { font-size: 10px; color: rgba(255,255,255,0.8); }
+
+  .phone-body { background: #F9FAFB; padding: 16px 12px; }
+
+  .phone-stat-row { display: flex; gap: 8px; margin-bottom: 12px; }
+
+  .phone-stat {
+    flex: 1;
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .phone-stat-label { font-size: 9px; color: #9CA3AF; margin-bottom: 4px; }
+  .phone-stat-value { font-size: 18px; font-weight: 700; color: #1F2937; font-family: 'Syne', sans-serif; }
+
+  .phone-section-title { font-size: 12px; font-weight: 600; color: #1F2937; margin-bottom: 8px; font-family: 'Syne', sans-serif; }
+
+  .phone-quick-item {
+    background: white;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+
+  .phone-quick-label { font-size: 11px; color: #1F2937; flex: 1; }
+  .phone-quick-arrow { font-size: 14px; color: #9CA3AF; }
+
+  /* ===== ALERT BADGES ===== */
+  .floating-badges {
+    position: absolute;
+    right: -120px;
+    top: 50px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .alert-badge {
+    background: var(--gray-800);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 12px 16px;
+    width: 200px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    animation: slideInRight 0.6s ease both;
+  }
+
+  .alert-badge:nth-child(1) { animation-delay: 0.8s; }
+  .alert-badge:nth-child(2) { animation-delay: 1s; }
+  .alert-badge:nth-child(3) { animation-delay: 1.2s; }
+
+  .alert-badge-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .alert-badge-title { font-size: 12px; font-weight: 600; color: var(--white); }
+  .alert-badge-sub { font-size: 10px; color: var(--gray-400); margin-top: 2px; }
+
+  /* ===== SECTIONS ===== */
+  section { padding: 100px 60px; max-width: 1200px; margin: 0 auto; }
+
+  .section-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #818CF8;
+    margin-bottom: 16px;
+  }
+
+  .section-title {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(36px, 5vw, 52px);
+    font-weight: 800;
+    line-height: 1.1;
+    margin-bottom: 20px;
+  }
+
+  .section-desc {
+    font-size: 18px;
+    color: var(--gray-400);
+    line-height: 1.7;
+    max-width: 540px;
+  }
+
+  /* ===== FEATURES ===== */
+  .features-section {
+    background: rgba(255,255,255,0.02);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 64px;
+  }
+
+  .feature-card {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 20px;
+    padding: 32px;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .feature-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(79,70,229,0.1) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .feature-card:hover { border-color: rgba(79,70,229,0.4); transform: translateY(-4px); }
+  .feature-card:hover::before { opacity: 1; }
+
+  .feature-icon {
+    width: 52px;
+    height: 52px;
+    background: rgba(79,70,229,0.15);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    margin-bottom: 20px;
+  }
+
+  .feature-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: var(--white);
+  }
+
+  .feature-desc { font-size: 15px; color: var(--gray-400); line-height: 1.6; }
+
+  /* ===== ALERTS SECTION ===== */
+  .alerts-section { display: flex; gap: 80px; align-items: center; }
+
+  .alerts-list { flex: 1; display: flex; flex-direction: column; gap: 16px; }
+
+  .alert-item {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 16px;
+    padding: 18px 20px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.25s;
+  }
+
+  .alert-item:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.12); }
+
+  .alert-item-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    flex-shrink: 0;
+  }
+
+  .alert-item-title { font-weight: 600; font-size: 15px; margin-bottom: 4px; }
+  .alert-item-desc { font-size: 13px; color: var(--gray-400); line-height: 1.5; }
+
+  .severity-high { background: rgba(239,68,68,0.15); }
+  .severity-medium { background: rgba(245,158,11,0.15); }
+  .severity-low { background: rgba(16,185,129,0.15); }
+
+  .severity-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+    align-self: flex-start;
+  }
+
+  .badge-high { background: rgba(239,68,68,0.2); color: #FCA5A5; }
+  .badge-medium { background: rgba(245,158,11,0.2); color: #FCD34D; }
+  .badge-low { background: rgba(16,185,129,0.2); color: #6EE7B7; }
+
+  /* ===== RISK SCORE ===== */
+  .risk-display {
+    flex: 1;
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 24px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .risk-number {
+    font-family: 'Syne', sans-serif;
+    font-size: 88px;
+    font-weight: 800;
+    line-height: 1;
+    background: linear-gradient(135deg, #10B981, #34D399);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .risk-label { font-size: 20px; color: #10B981; font-weight: 600; margin-bottom: 24px; }
+
+  .risk-bar-bg {
+    height: 8px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 32px;
+  }
+
+  .risk-bar-fill {
+    height: 100%;
+    width: 35%;
+    background: linear-gradient(90deg, #10B981, #34D399);
+    border-radius: 4px;
+  }
+
+  .risk-patterns { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+
+  .risk-pattern {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--gray-400);
+  }
+
+  .risk-pattern-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ===== CTA ===== */
+  .cta-section {
+    text-align: center;
+    padding: 120px 60px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cta-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(79,70,229,0.25) 0%, transparent 70%);
+  }
+
+  .cta-section h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: clamp(40px, 6vw, 68px);
+    font-weight: 800;
+    margin-bottom: 20px;
+    position: relative;
+  }
+
+  .cta-section p {
+    font-size: 20px;
+    color: var(--gray-400);
+    margin-bottom: 48px;
+    position: relative;
+  }
+
+  /* ===== FOOTER ===== */
+  footer {
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 40px 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: var(--gray-400);
+    font-size: 14px;
+  }
+
+  .footer-logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* ===== ANIMATIONS ===== */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInDown {
+    from { opacity: 0; transform: translateY(-16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 900px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    section { padding: 80px 24px; }
+    .features-grid { grid-template-columns: 1fr; }
+    .alerts-section { flex-direction: column; }
+    .floating-badges { display: none; }
+    .hero { padding: 100px 24px 60px; }
+    footer { flex-direction: column; gap: 16px; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-icon">🛡️</div>
+    Game Guardian
+  </a>
+  <ul class="nav-links">
+    <li><a href="#features">Features</a></li>
+    <li><a href="#alerts">Alerts</a></li>
+    <li><a href="#safety">Safety Score</a></li>
+  </ul>
+  <a href="#download" class="nav-cta">Get Early Access</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero" style="max-width:100%; padding-top:120px;">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+
+  <div class="hero-badge">
+    <div class="hero-badge-dot"></div>
+    Built for Roblox Parents · Free During Beta
+  </div>
+
+  <h1>
+    Know what your<br>
+    child is doing<br>
+    <span>on Roblox.</span>
+  </h1>
+
+  <p class="hero-sub">
+    Real-time alerts, pattern detection, and safety scoring
+    designed specifically for parents of Roblox players aged 7–13.
+  </p>
+
+  <div class="hero-actions">
+    <a href="#download" class="btn-primary">
+      🛡️ Get Early Access — Free
+    </a>
+    <a href="#features" class="btn-secondary">
+      See How It Works
+    </a>
+  </div>
+
+  <!-- PHONE MOCKUP -->
+  <div class="phone-wrapper">
+    <div class="phone-glow"></div>
+
+    <div class="phone">
+      <div class="phone-screen">
+        <div class="phone-header">
+          <div class="phone-greeting">🛡️ Good Evening</div>
+          <div class="phone-title">Game Guardian</div>
+          <div class="phone-child-card">
+            <div class="phone-avatar">E</div>
+            <div>
+              <div class="phone-child-name">Emma</div>
+              <div class="phone-child-user">@EmmaPlays123 · Age 10</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="phone-alert">
+          <span style="font-size:18px;">⚠️</span>
+          <div>
+            <div class="phone-alert-text">4 High Priority Alerts</div>
+            <div class="phone-alert-sub">Late Night Gaming Detected</div>
+          </div>
+        </div>
+
+        <div class="phone-body">
+          <div class="phone-stat-row">
+            <div class="phone-stat">
+              <div class="phone-stat-label">Playtime</div>
+              <div class="phone-stat-value">6h 39m</div>
+            </div>
+            <div class="phone-stat">
+              <div class="phone-stat-label">New Friends</div>
+              <div class="phone-stat-value">4</div>
+            </div>
+          </div>
+
+          <div class="phone-section-title">Quick Access</div>
+          <div class="phone-quick-item">
+            <span>📊</span>
+            <span class="phone-quick-label">Analytics & Patterns</span>
+            <span class="phone-quick-arrow">›</span>
+          </div>
+          <div class="phone-quick-item">
+            <span>👥</span>
+            <span class="phone-quick-label">Manage Children</span>
+            <span class="phone-quick-arrow">›</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FLOATING BADGES -->
+    <div class="floating-badges">
+      <div class="alert-badge">
+        <div class="alert-badge-icon" style="background:rgba(239,68,68,0.15);">⏰</div>
+        <div>
+          <div class="alert-badge-title">Late Night Gaming</div>
+          <div class="alert-badge-sub">2:15 AM · Blox Fruits</div>
+        </div>
+      </div>
+      <div class="alert-badge">
+        <div class="alert-badge-icon" style="background:rgba(239,68,68,0.15);">🛡️</div>
+        <div>
+          <div class="alert-badge-title">Risky Group Joined</div>
+          <div class="alert-badge-sub">Free Robux Giveaway</div>
+        </div>
+      </div>
+      <div class="alert-badge">
+        <div class="alert-badge-icon" style="background:rgba(245,158,11,0.15);">💳</div>
+        <div>
+          <div class="alert-badge-title">Purchase Attempted</div>
+          <div class="alert-badge-sub">800 Robux · $9.99</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<div class="features-section" id="features">
+  <section>
+    <div class="section-label">Everything you need</div>
+    <h2 class="section-title">Complete Roblox<br>visibility for parents.</h2>
+    <p class="section-desc">Built from the ground up for Roblox — not a generic parental control app retrofitted to gaming.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎮</div>
+        <div class="feature-title">Game Activity Tracking</div>
+        <div class="feature-desc">See every game your child played, how long they spent, and whether it's age-appropriate.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👥</div>
+        <div class="feature-title">Friend & Group Monitoring</div>
+        <div class="feature-desc">Get alerted when your child adds new friends rapidly or joins groups with suspicious keywords.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <div class="feature-title">Pattern Detection</div>
+        <div class="feature-desc">Six behavioral algorithms analyze activity and surface patterns before they become problems.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏰</div>
+        <div class="feature-title">Screen Time Controls</div>
+        <div class="feature-desc">Set weekday and weekend limits. Configure quiet hours so gaming stops at bedtime.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🚫</div>
+        <div class="feature-title">Game Blocklist</div>
+        <div class="feature-desc">Block specific games or automatically block any game rated 13+ for your child's age group.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">👶</div>
+        <div class="feature-title">Multi-Child Support</div>
+        <div class="feature-desc">Monitor multiple children from one account. Switch between profiles instantly on the dashboard.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ALERTS SECTION -->
+<section id="alerts" style="padding: 100px 60px; max-width: 1200px; margin: 0 auto;">
+  <div class="alerts-section">
+    <div style="flex:1;">
+      <div class="section-label">Alert System</div>
+      <h2 class="section-title">8 alert types.<br>Nothing slips through.</h2>
+      <p class="section-desc" style="margin-bottom: 40px;">
+        Every alert includes context, severity, and recommended actions so you know exactly what to do.
+      </p>
+
+      <div class="alerts-list">
+        <div class="alert-item">
+          <div class="alert-item-icon severity-high">⏰</div>
+          <div>
+            <div class="alert-item-title">Late Night Gaming</div>
+            <div class="alert-item-desc">Emma was playing Blox Fruits at 2:15 AM</div>
+          </div>
+          <span class="severity-badge badge-high">HIGH</span>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-icon severity-high">🛡️</div>
+          <div>
+            <div class="alert-item-title">Risky Group Joined</div>
+            <div class="alert-item-desc">Free Robux Giveaway — scam keywords flagged</div>
+          </div>
+          <span class="severity-badge badge-high">HIGH</span>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-icon severity-high">💳</div>
+          <div>
+            <div class="alert-item-title">Purchase Attempt</div>
+            <div class="alert-item-desc">800 Robux ($9.99) attempted in Blox Fruits</div>
+          </div>
+          <span class="severity-badge badge-high">HIGH</span>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-icon severity-medium">👥</div>
+          <div>
+            <div class="alert-item-title">Rapid Friend Additions</div>
+            <div class="alert-item-desc">4 new friends added in the last 6 hours</div>
+          </div>
+          <span class="severity-badge badge-medium">MEDIUM</span>
+        </div>
+        <div class="alert-item">
+          <div class="alert-item-icon severity-low">🎮</div>
+          <div>
+            <div class="alert-item-title">New Game Started</div>
+            <div class="alert-item-desc">Arsenal (13+ shooter) played for the first time</div>
+          </div>
+          <span class="severity-badge badge-low">LOW</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="safety" class="risk-display" style="max-width: 320px; flex-shrink:0;">
+      <div style="font-size: 13px; color: var(--gray-400); margin-bottom: 12px;">Safety Risk Score</div>
+      <div class="risk-number">35</div>
+      <div class="risk-label">Low Risk</div>
+      <div class="risk-bar-bg">
+        <div class="risk-bar-fill"></div>
+      </div>
+      <div class="risk-patterns">
+        <div class="risk-pattern">
+          <div class="risk-pattern-dot" style="background:#EF4444;"></div>
+          Late night gaming pattern detected
+        </div>
+        <div class="risk-pattern">
+          <div class="risk-pattern-dot" style="background:#EF4444;"></div>
+          Risky group memberships flagged
+        </div>
+        <div class="risk-pattern">
+          <div class="risk-pattern-dot" style="background:#F59E0B;"></div>
+          Age-inappropriate games found
+        </div>
+        <div class="risk-pattern">
+          <div class="risk-pattern-dot" style="background:#10B981;"></div>
+          Playtime within healthy range
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section" id="download" style="max-width:100%;">
+  <div class="cta-bg"></div>
+  <h2 style="position:relative;">Ready to know<br>what's really happening?</h2>
+  <p style="position:relative;">Join parents who are already using Game Guardian to keep their kids safe on Roblox.</p>
+  <div style="position:relative; display:flex; gap:16px; justify-content:center; flex-wrap:wrap;">
+    <a href="mailto:gameguardianapp@gmail.com?subject=Early Access Request" class="btn-primary" style="font-size:18px; padding:18px 44px;">
+      🛡️ Request Early Access
+    </a>
+  </div>
+  <p style="position:relative; font-size:14px; color:var(--gray-400); margin-top:20px; margin-bottom:0;">
+    Free during beta · No credit card required · Android first
+  </p>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">
+    <span style="font-size:20px;">🛡️</span>
+    Game Guardian
+  </div>
+  <div>Built by Shinayd Pollard Joseph · Full Sail University · 2026</div>
+  <div>Know more. Worry less.</div>
+</footer>
+
+</body>
+</html>
+```

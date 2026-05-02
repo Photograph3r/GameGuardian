@@ -8,8 +8,8 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
 import AuthService from '../services/AuthService';
@@ -21,16 +21,37 @@ import {
   DISCOVERY,
 } from '../services/RobloxAuthService';
 import { useRobloxAuth } from '../components/SharedStates';
+import { useTheme } from '../context/ThemeContext';
+import CustomAlert from '../components/CustomAlert';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen({ navigation, onLoginSuccess }: any) {
+  const { colors } = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [robloxLoading, setRobloxLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    title: '',
+    message: '',
+    icon: '🛡️',
+    buttons: [] as any[],
+  });
+
   const { login: robloxLogin } = useRobloxAuth();
+
+  const showAlert = (title: string, message: string, icon: string) => {
+    setAlertConfig({
+      title,
+      message,
+      icon,
+      buttons: [{ text: 'OK', style: 'default' }],
+    });
+    setAlertVisible(true);
+  };
 
   const [request, response, promptAsync] = AuthSession.useAuthRequest(
     {
@@ -51,28 +72,33 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
             response.params.code,
             request?.codeVerifier ?? ''
           );
+          // Save Roblox token for ChildSetupScreen to use
+          await AsyncStorage.setItem('@gameguardian_roblox_token', JSON.stringify({
+            accessToken: tokens.accessToken,
+            refreshToken: tokens.refreshToken,
+          }));
           const user = await fetchRobloxUser(tokens.accessToken);
           await robloxLogin(user, tokens.accessToken, tokens.refreshToken);
           if (onLoginSuccess) onLoginSuccess();
         } catch (err: any) {
-          Alert.alert('Roblox Login Failed', err.message || 'Please try again');
+          showAlert('Roblox Login Failed', err.message || 'Please try again.', '🎮');
         } finally {
           setRobloxLoading(false);
         }
       };
       handleResponse();
     } else if (response?.type === 'error') {
-      Alert.alert('Roblox Login Failed', response.error?.message || 'Authorization error');
+      showAlert('Roblox Login Failed', response.error?.message || 'Authorization error.', '🎮');
     }
   }, [response]);
 
   const handleLogin = async () => {
     if (!email.trim()) {
-      Alert.alert('Error', 'Please enter your email');
+      showAlert('Missing Info', 'Please enter your email.', '⚠️');
       return;
     }
     if (!password.trim()) {
-      Alert.alert('Error', 'Please enter your password');
+      showAlert('Missing Info', 'Please enter your password.', '⚠️');
       return;
     }
     setLoading(true);
@@ -80,7 +106,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
       await AuthService.login(email.trim(), password);
       if (onLoginSuccess) onLoginSuccess();
     } catch (err: any) {
-      Alert.alert('Login Failed', err.message || 'Please try again');
+      showAlert('Login Failed', err.message || 'Invalid email or password.', '🚫');
     } finally {
       setLoading(false);
     }
@@ -90,13 +116,25 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+
+      <CustomAlert
+        visible={alertVisible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        icon={alertConfig.icon}
+        buttons={alertConfig.buttons}
+        onDismiss={() => setAlertVisible(false)}
+      />
+
       <View style={styles.content}>
+        {/* Header */}
         <View style={styles.headerSection}>
           <Text style={styles.shieldIcon}>🛡️</Text>
           <Text style={styles.title}>Game Guardian</Text>
           <Text style={styles.subtitle}>Protect your child's gaming experience</Text>
         </View>
 
+        {/* Form */}
         <View style={styles.formSection}>
           <Text style={styles.formTitle}>Welcome Back</Text>
 
@@ -134,7 +172,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
           </View>
 
           <TouchableOpacity
-            style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+            style={[styles.loginButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}>
             {loading ? (
@@ -146,7 +184,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
 
           <TouchableOpacity
             style={styles.forgotButton}
-            onPress={() => Alert.alert('Reset Password', 'Password reset coming soon!')}>
+            onPress={() => showAlert('Reset Password', 'Password reset will be available soon.', '🔑')}>
             <Text style={styles.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -157,7 +195,7 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
           </View>
 
           <TouchableOpacity
-            style={[styles.robloxButton, (robloxLoading || !request) && styles.loginButtonDisabled]}
+            style={[styles.robloxButton, (robloxLoading || !request) && styles.buttonDisabled]}
             onPress={() => promptAsync()}
             disabled={robloxLoading || !request}>
             {robloxLoading ? (
@@ -171,16 +209,13 @@ export default function LoginScreen({ navigation, onLoginSuccess }: any) {
           </TouchableOpacity>
         </View>
 
+        {/* Footer */}
         <View style={styles.footerSection}>
           <Text style={styles.footerText}>Don't have an account?</Text>
           <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
             <Text style={styles.signupLink}> Create Account</Text>
           </TouchableOpacity>
         </View>
-
-        <Text style={styles.demoHint}>
-          Demo: demo@gameguardian.com / demo1234
-        </Text>
       </View>
     </KeyboardAvoidingView>
   );
@@ -213,7 +248,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5', borderRadius: 12, paddingVertical: 16,
     alignItems: 'center', marginTop: 8,
   },
-  loginButtonDisabled: { opacity: 0.7 },
+  buttonDisabled: { opacity: 0.7 },
   loginButtonText: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
   forgotButton: { alignItems: 'center', marginTop: 12 },
   forgotText: { color: '#4F46E5', fontSize: 14 },
@@ -229,5 +264,4 @@ const styles = StyleSheet.create({
   footerSection: { flexDirection: 'row', justifyContent: 'center', marginTop: 24 },
   footerText: { color: '#C7D2FE', fontSize: 14 },
   signupLink: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
-  demoHint: { textAlign: 'center', color: 'rgba(255,255,255,0.5)', fontSize: 12, marginTop: 16 },
 });
