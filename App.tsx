@@ -5,6 +5,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Text } from 'react-native';
 import AuthService from './src/services/AuthService';
 import StorageService from './src/services/StorageService';
+import ApiService from './src/services/ApiService';
 import { ThemeProvider } from './src/context/ThemeContext';
 
 import LoginScreen from './src/screens/LoginScreen';
@@ -136,6 +137,7 @@ export default function App() {
 
   const handleLogout = async () => {
     await AuthService.logout();
+    ApiService.clearCache();
     setAppState('login');
   };
 

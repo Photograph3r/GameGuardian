@@ -1,282 +1,87 @@
-GameGuardian 🛡️ - Parental Monitoring for Roblox
+# Game Guardian 🛡️ — Milestone 4 Complete
 
+Parental monitoring app built specifically for Roblox. React Native + Expo.
 
+## Milestone 4 — Final Release (May 2026)
+- Firebase Authentication with real user accounts
+- Roblox OAuth 2.0 PKCE flow
+- 3-step child setup wizard (real parent data on dashboard)
+- Multiple children support with profile switching
+- Swipe to resolve alerts (usability finding addressed)
+- 22 passing unit tests (PatternService)
+- Custom themed alert dialogs across all screens
+- Dark mode and high contrast accessibility mode
+- Live landing page: photograph3r.github.io/GameGuardian
+- Beta testing program launched: forms.gle/uXYcwKd2a7yHP7y8A
+- Randomized demo data per session for beta testers
 
-A React Native mobile application that helps parents monitor their children's Roblox gaming activity with real-time alerts, pattern detection, and parental controls.
-
-
-
-&#x20;Project Status
-
- \*\*New in Milestone 3\*\*
-- Dark mode and high contrast mode (ThemeContext)
-- Pattern detection algorithm (6 behavioral patterns)
-- Analytics dashboard with risk scoring
+## Milestone 3 (Apr 27)
+- Pattern detection algorithm (6 behavioral checks, risk scoring)
+- Analytics dashboard with Safety Risk Score
 - Clickable group reviews with recommended actions
-- Functional parental controls (Screen Time, Game Blocklist, Quiet Hours)
-- Add Child screen with Roblox account linking
-- 12 alert types including purchase attempts and inappropriate chat
+- Dark mode and high contrast mode (ThemeContext)
+- Functional Screen Time Limits, Game Blocklist, Quiet Hours
+- 12 alert types including purchase attempts and chat flagging
 - Usability testing completed (2 think-aloud sessions)
 
-\*\*Milestone 2 — Functionally Complete\*\*
-
-Authentication, onboarding, alert filtering, and full app flow integrated.
-
-
-
-Features
-
-
-
-Authentication \& Onboarding
-
-\- Login/Signup with email and password validation
-
-\- Session persistence via AsyncStorage (stay logged in across restarts)
-
-\- 3-screen swipeable onboarding walkthrough (first-time users only)
-
-\- Logout with confirmation dialog
-
-\- React Context for global auth state management
-
-
-
-Dashboard
-
-\- Time-of-day greeting (Good Morning/Afternoon/Evening)
-
-\- Child monitoring card with Roblox username
-
-\- Weekly stats (total playtime, new friends)
-
-\- Daily activity bar chart
-
-\- High priority alert banner
-
-\- Pull-to-refresh
-
-\- Last sync timestamp
-
-\- Quick access navigation
-
-
-
-Alerts
-
-\- Color-coded severity (High/Medium/Low)
-
-\- Filter by severity (All, High, Medium, Low)
-
-\- Sort toggle (Newest/Oldest)
-
-\- Mark-as-read persistence via AsyncStorage
-
-\- Alert detail with type-specific recommendations
-
-\- Resolve and Remind Me Later actions
-
-
-
-Activity
-
-\- Functional tabs: Games, Friends, Groups
-
-\- Game cards with genre tags and age ratings (13+ flagged)
-
-\- Friend list with NEW/FRIEND badges
-
-\- Group safety: risky groups flagged with keyword detection
-
-
-
-Settings \& Parental Controls
-
-\- Child profile information
-
-\- Monitoring toggles (persist across sessions)
-
-\- Parental Controls: Screen Time Limits, Game Blocklist, Quiet Hours
-
-\- Privacy \& Safety notice
-
-\- Log Out button
-
-
-
-Architecture
-
-\- API service layer (ApiService.ts) — abstracts all data access for easy Roblox API swap
-
-\- Storage service (StorageService.ts) — typed AsyncStorage wrapper
-
-\- Auth service (AuthService.ts) — mock auth ready for Firebase/OAuth integration
-
-\- Reusable Loading, Error, and Empty state components
-
-\- App state machine: Onboarding → Login → Splash → Dashboard
-
-
-
-Tech Stack
-
-
-
-\- \*\*Framework:\*\* React Native 0.81.5
-
-\- \*\*Build System:\*\* Expo SDK 54
-
-\- \*\*Navigation:\*\* React Navigation (Stack + Bottom Tabs)
-
-\- \*\*Language:\*\* TypeScript
-
-\- \*\*State:\*\* React Context + AsyncStorage
-
-\- \*\*Platform:\*\* Android (iOS compatible)
-
-
-
-Installation
-
-
-
+## Milestone 2 (Apr 20)
+- Firebase Authentication replacing mock auth
+- 3-screen onboarding walkthrough
+- Alert filtering by severity and sort toggle
+- Login/Signup with session persistence
+- React Context for global auth state
+
+## Milestone 1 (Apr 14)
+- Complete navigation system
+- Dashboard with activity summary and charts
+- Alert system with severity levels
+- Activity tracking (games, friends, groups)
+- Settings with monitoring toggles
+- API service layer with AsyncStorage persistence
+
+## Tech Stack
+- Framework: React Native + Expo SDK 54
+- Language: TypeScript
+- Auth: Firebase Authentication + Roblox OAuth 2.0
+- Database: Firestore
+- Navigation: React Navigation (Stack + Bottom Tabs)
+- State: React Context + AsyncStorage
+- Tests: Jest + ts-jest (22 passing)
+- Platform: Android (iOS compatible)
+
+## Installation
 ```bash
-
-Clone repository
-
 git clone https://github.com/Photograph3r/GameGuardian.git
-
 cd GameGuardian
-
-
-
-Install dependencies
-
 npm install
-
-
-
-Run on Android emulator
-
-npx expo start --android
-
+npx expo start
 ```
 
-
-
-&#x20;Demo Credentials
-
-
-
-\- \*\*Email:\*\* demo@gameguardian.com
-
-\- \*\*Password:\*\* demo1234
-
-
-
-Project Structure
-
-
-
+## Project Structure
 GameGuardian/
-
 ├── src/
-
-│   ├── screens/           All app screens (9 total)
-
-│   ├── services/          API, Auth, and Storage services
-
-│   ├── components/        Reusable UI components
-
-│   ├── data/              Mock data
-
-│   └── types/             TypeScript interfaces
-
-├── App.tsx                Navigation + auth state machine
-
-├── package.json           Dependencies
-
+│   ├── screens/          All app screens
+│   ├── services/         ApiService, AuthService, StorageService,
+│   │                     FirebaseService, PatternService, RobloxAuthService
+│   ├── components/       CustomAlert, SharedStates
+│   ├── context/          ThemeContext
+│   ├── data/             Mock data (randomized per session)
+│   ├── types/            TypeScript interfaces
+│   └── tests/        PatternService unit tests (22 passing)
+├── docs/                 Landing page (GitHub Pages)
+├── App.tsx               Navigation + app state machine
 └── README.md
 
+## Links
+- Landing page: https://photograph3r.github.io/GameGuardian
+- Beta signup: https://forms.gle/uXYcwKd2a7yHP7y8A
+- Trello: https://trello.com/b/jM7NIq9s/gameguardian-pp4-roadmap
 
+## 🎓 Full Sail University
+Course: Project & Portfolio 4 (PP4)
+Student: Shinayd Pollard Joseph
+Instructor: Robert Martinez
+Term: C202604
 
-UX Design
-
-
-
-Nielsen's 10 Usability Heuristics applied throughout:
-
-\- Visibility of system status (loading states, sync indicators)
-
-\- Error prevention (form validation, confirmation dialogs)
-
-\- Consistency (unified styling across all screens)
-
-\- Recognition over recall (tab counts, severity badges)
-
-
-
-Competitor analysis: Bark, Qustodio, Google Family Link
-
-
-
-🎓 Full Sail University
-
-
-
-\*\*Course:\*\* Project \& Portfolio 4 (PP4)
-
-\*\*Student:\*\* Shinayd Pollard Joseph
-
-\*\*Instructor:\*\* Robert Martinez
-
-
-
-Roadmap
-
-
-
-Milestone 3 (Apr 27)
-
-\- Dark mode with Theme Context
-
-\- Pattern detection algorithm
-
-\- UI/UX polish pass
-
-\- Usability testing (2 think-aloud sessions)
-
-
-
-Milestone 4 (May 3)
-
-\- Unit and component tests
-
-\- End-to-end testing
-
-\- Usability findings addressed
-
-\- Final polish
-
-
-
-&#x20;Future
-
-\- Roblox OAuth 2.0 integration
-
-\- Firebase push notifications
-
-\- Multi-child profile support
-
-\- Email digest reports
-
-\- Analytics dashboard
-
-
-
-&#x20;License
-
-
-
-MIT License - Educational project for Full Sail University
-
+## License
+MIT License — Educational project for Full Sail University
